@@ -482,7 +482,7 @@ async function startApp() {
   if (loader) loader.classList.remove('hidden');
 
   try {
-    // 2. Gọi dữ liệu từ Google Sheets với cấu hình vượt rào CORS/302
+    // 2. Gọi dữ liệu từ Google Sheets
     const resp = await fetch(`${SCRIPT_URL}?action=getAll`, {
       method: 'GET',
       mode: 'cors',      
@@ -493,21 +493,42 @@ async function startApp() {
 
     const data = await resp.json();
 
-    // 3. Nạp dữ liệu vào STORE (Xử lý để trống nếu không có dữ liệu)
+    // 3. Nạp dữ liệu vào STORE & Xử lý định dạng thời gian
     if (data && data.rows) {
       STORE = {}; // Làm sạch dữ liệu cũ
       data.rows.forEach(row => {
+        // --- XỬ LÝ TIMEZONE VIỆT NAM TRỰC TIẾP TẠI ĐÂY ---
+        if (row.submitted_at) {
+          try {
+            const date = new Date(row.submitted_at);
+            // Ghi đè trực tiếp vào trường submitted_at
+            row.submitted_at = date.toLocaleString('vi-VN', {
+              timeZone: 'Asia/Ho_Chi_Minh',
+              hour: '2-digit',
+              minute: '2-digit',
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour12: false
+            });
+          } catch (e) {
+            console.error("Lỗi định dạng ngày cho dòng:", row, e);
+          }
+        }
+
         const mIdx = parseInt(row.month) - 1;
         const key = storeKey(row.dept, row.year, mIdx);
         
-        // Đảm bảo các giá trị KPI null/undefined sẽ được giữ nguyên hoặc xử lý hiển thị sau này
-        STORE[key] = { ...row, _saved: true }; 
+        // Gán _ts bằng dữ liệu đã format để hàm renderBossRight() hiển thị đúng
+        STORE[key] = { 
+          ...row, 
+          _saved: true, 
+          _ts: row.submitted_at || '—' 
+        }; 
       });
     }
   } catch (e) {
     console.error("Lỗi kết nối hệ thống:", e);
-    // Chỉ hiện thông báo nếu thực sự không thể lấy dữ liệu
-    // alert("Không thể tải dữ liệu từ Sheets. Dashboard sẽ hiển thị trống."); 
   }
 
   // 4. Chuyển đổi giao diện (Ẩn loading, hiện App)
@@ -518,7 +539,7 @@ async function startApp() {
   if (pgLogin) pgLogin.style.display = 'none';
   if (pgApp) pgApp.style.display = 'flex';
   
-  // 5. Cập nhật thông tin người dùng (An toàn - Tránh lỗi null textContent)
+  // 5. Cập nhật thông tin người dùng (Avatar & Name)
   const av = document.getElementById('u-av');
   const uName = document.getElementById('u-name');
   const tBadge = document.getElementById('t-badge');
@@ -539,16 +560,21 @@ async function startApp() {
       tBadge.textContent = 'Management';
       tBadge.className = 'tbadge tbadge-amber';
     }
+    // Gọi giao diện cho quản lý
     if (typeof buildBossLeft === 'function') buildBossLeft();
     if (typeof renderBossRight === 'function') renderBossRight();
+    
   } else if (user) {
     if (tBadge) {
       tBadge.textContent = user.dept;
       tBadge.className = 'tbadge tbadge-blue';
     }
+    // Thiết lập các biến chọn mặc định cho nhân viên
     selDept = user.dept; 
     selYear = NOW_Y; 
     selMonth = NOW_M;
+    
+    // Gọi giao diện cho nhân viên
     if (typeof buildDeptLeft === 'function') buildDeptLeft();
     if (typeof renderDeptRight === 'function') renderDeptRight();
   }
@@ -966,18 +992,29 @@ function bossSelectDept(deptId){
 // ══════════════════════════════════════════════════════
 // BOSS VIEW — RIGHT PANEL
 // ══════════════════════════════════════════════════════
-function renderBossRight(deptId){
-  const {labels,keys}=buildDateRange();
-  Object.keys(charts).filter(k=>k.startsWith('b_')).forEach(k=>{try{charts[k].destroy();}catch(e){}delete charts[k];});
+function renderBossRight(deptId) {
+  // 1. Dọn dẹp bộ nhớ (Xóa biểu đồ cũ)
+  const { labels, keys } = buildDateRange();
+  Object.keys(charts).filter(k => k.startsWith('b_')).forEach(k => {
+    try { charts[k].destroy(); } catch (e) {}
+    delete charts[k];
+  });
 
-  if(!deptId){
+  const titleEl = document.getElementById('rp-title');
+  const subEl = document.getElementById('rp-sub');
+  const bodyEl = document.getElementById('rp-body');
+
+  if (!deptId) {
+    // --- QUAN TRỌNG: Hiện lại thanh menu bên trái khi về Overview ---
+    if (typeof buildBossLeft === 'function') buildBossLeft();
+
     // Show overview: all depts comparison chart
-    document.getElementById('rp-title').textContent='All Departments';
-    document.getElementById('rp-sub').textContent=`Submission status · ${MONTHS[NOW_M]} ${NOW_Y}`;
+    titleEl.textContent = 'All Departments';
+    subEl.textContent = `Submission status · ${MONTHS[NOW_M]} ${NOW_Y}`;
 
-    const submitted=DEPTS.filter(d=>STORE[storeKey(d.id,NOW_Y,NOW_M)]?._saved).length;
-    const body=document.getElementById('rp-body');
-    body.innerHTML=`
+    const submitted = DEPTS.filter(d => STORE[storeKey(d.id, NOW_Y, NOW_M)]?._saved).length;
+    
+    bodyEl.innerHTML = `
       <div class="stbl-wrap">
         <div class="stbl-head">
           <span>Submission status — ${MONTHS[NOW_M]} ${NOW_Y}</span>
@@ -985,16 +1022,16 @@ function renderBossRight(deptId){
         </div>
         <table>
           <thead><tr><th>Department</th><th>Manager</th><th>Status</th><th>Last saved</th><th></th></tr></thead>
-          <tbody>${DEPTS.map(d=>{
-            const r=STORE[storeKey(d.id,NOW_Y,NOW_M)]||{};
-            const sub=r._saved;
+          <tbody>${DEPTS.map(d => {
+            const r = STORE[storeKey(d.id, NOW_Y, NOW_M)] || {};
+            const sub = r._saved;
             return `<tr>
               <td><span style="display:inline-flex;align-items:center;gap:6px">
                 <span style="width:7px;height:7px;border-radius:50%;background:${d.color};display:inline-block"></span>${d.name}
               </span></td>
               <td style="color:var(--muted)">${d.manager}</td>
-              <td><span class="badge ${sub?'badge-green':'badge-amber'}">${sub?'Submitted':'Pending'}</span></td>
-              <td style="color:var(--muted);font-size:11px">${r._ts||'—'}</td>
+              <td><span class="badge ${sub ? 'badge-green' : 'badge-amber'}">${sub ? 'Submitted' : 'Pending'}</span></td>
+              <td style="color:var(--muted);font-size:11px">${r.submitted_at || '—'}</td>
               <td><button class="view-charts-btn" style="width:auto;padding:4px 10px" onclick="bossSelectDept('${d.id}')">Charts →</button></td>
             </tr>`;
           }).join('')}</tbody>
@@ -1002,51 +1039,57 @@ function renderBossRight(deptId){
       </div>
 
       <div class="charts-stack">
-        ${DEPTS.map((d,di)=>`
+        ${DEPTS.map((d, di) => `
           <div class="chart-card">
             <div class="cc-head">
               <div class="cc-title" style="display:flex;align-items:center;gap:6px">
                 <span style="width:8px;height:8px;border-radius:50%;background:${d.color};display:inline-block"></span>
                 ${d.name} — ${d.kpis[0].label}
               </div>
-              <div class="cc-sub">${d.kpis[0].unit} · ${labels[0]} → ${labels[labels.length-1]}</div>
+              <div class="cc-sub">${d.kpis[0].unit} · ${labels[0]} → ${labels[labels.length - 1]}</div>
             </div>
             <div class="cc-wrap"><canvas id="b_ov_${di}"></canvas></div>
           </div>`).join('')}
       </div>`;
 
-    // render each dept's first KPI
-    DEPTS.forEach((d,di)=>{
-      const deptKeys=keys.map(k=>k.replace('DEPTID',d.id));
-      const vals=deptKeys.map(k=>STORE[k]?.[d.kpis[0].key]??null);
-      charts[`b_ov_${di}`]=mkLine(`b_ov_${di}`,labels,d.kpis[0].label,vals,d.color,d.kpis[0].unit);
+    // render mỗi dept's first KPI
+    DEPTS.forEach((d, di) => {
+      const deptKeys = keys.map(k => k.replace('DEPTID', d.id));
+      const vals = deptKeys.map(k => STORE[k]?.[d.kpis[0].key] ?? null);
+      charts[`b_ov_${di}`] = mkLine(`b_ov_${di}`, labels, d.kpis[0].label, vals, d.color, d.kpis[0].unit);
     });
     return;
   }
 
   // Single dept — all KPI charts
-  const dept=DEPTS.find(d=>d.id===deptId);
-  document.getElementById('rp-title').textContent=dept.name;
-  document.getElementById('rp-sub').textContent=dept.purpose;
+  const dept = DEPTS.find(d => d.id === deptId);
 
-  const body=document.getElementById('rp-body');
-  body.innerHTML='<div class="charts-stack" id="b-charts-stack"></div>';
-  const stack=document.getElementById('b-charts-stack');
+  // --- THÊM NÚT BACK VÀO TIÊU ĐỀ ---
+  titleEl.innerHTML = `
+    <div style="display:flex; align-items:center; gap:12px">
+      <button class="tbtn" onclick="renderBossRight()" style="padding:4px 10px; font-size:12px; cursor:pointer">← Back</button>
+      <span>${dept.name}</span>
+    </div>
+  `;
+  subEl.textContent = dept.purpose;
 
-  dept.kpis.forEach((kpi,idx)=>{
-    const deptKeys=keys.map(k=>k.replace('DEPTID',deptId));
-    const vals=deptKeys.map(k=>STORE[k]?.[kpi.key]??null);
-    const canvasId=`b_${idx}`;
-    const card=document.createElement('div');
-    card.className='chart-card';
-    card.innerHTML=`
+  bodyEl.innerHTML = '<div class="charts-stack" id="b-charts-stack"></div>';
+  const stack = document.getElementById('b-charts-stack');
+
+  dept.kpis.forEach((kpi, idx) => {
+    const deptKeys = keys.map(k => k.replace('DEPTID', deptId));
+    const vals = deptKeys.map(k => STORE[k]?.[kpi.key] ?? null);
+    const canvasId = `b_${idx}`;
+    const card = document.createElement('div');
+    card.className = 'chart-card';
+    card.innerHTML = `
       <div class="cc-head">
         <div class="cc-title">${kpi.label}</div>
-        <div class="cc-sub">${kpi.unit} · ${labels[0]} → ${labels[labels.length-1]}</div>
+        <div class="cc-sub">${kpi.unit} · ${labels[0]} → ${labels[labels.length - 1]}</div>
       </div>
       <div class="cc-wrap"><canvas id="${canvasId}"></canvas></div>`;
     stack.appendChild(card);
-    charts[canvasId]=mkLine(canvasId,labels,kpi.label,vals,dept.color,kpi.unit);
+    charts[canvasId] = mkLine(canvasId, labels, kpi.label, vals, dept.color, kpi.unit);
   });
 }
 
