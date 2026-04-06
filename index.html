@@ -287,7 +287,7 @@ tbody tr:hover td{background:var(--surface2)}
 // ══════════════════════════════════════════════════════
 // CONFIG — fill in after IT setup
 // ══════════════════════════════════════════════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwykI5hAjNSqCYRqMyzyOc5kVQDgqCLR_RBTPNP5zHrJu5mhzrHtLYwVHo2E5jR_epQBg/exec'; // or SharePoint config
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4RBwya-zrnWPd-0I58UF-wwHaxa-RxNoFWG_P-I2Fix8snKkT1Ug2N93IP8dHs14Y/exec'; // or SharePoint config
 
 // ══════════════════════════════════════════════════════
 // CONSTANTS
@@ -399,7 +399,7 @@ function seedDemo() {
     STORE[storeKey(d.id,NOW_Y,NOW_M)] = {_saved:false};
   });
 }
-seedDemo();
+
 
 // ══════════════════════════════════════════════════════
 // STATE
@@ -477,48 +477,80 @@ function doLogout(){
 // }
 
 async function startApp() {
-  // Hiện màn hình loading
-  document.getElementById('global-loader').classList.remove('hidden');
-  
+  // 1. Hiện màn hình loading
+  const loader = document.getElementById('global-loader');
+  if (loader) loader.classList.remove('hidden');
+
   try {
-    // Lấy dữ liệu thật từ Sheets
-    const resp = await fetch(`${SCRIPT_URL}?action=getAll`);
+    // 2. Gọi dữ liệu từ Google Sheets với cấu hình vượt rào CORS/302
+    const resp = await fetch(`${SCRIPT_URL}?action=getAll`, {
+      method: 'GET',
+      mode: 'cors',      
+      redirect: 'follow' 
+    });
+
+    if (!resp.ok) throw new Error('Phản hồi từ server không ổn định');
+
     const data = await resp.json();
-    
-    // Chuyển đổi dữ liệu từ Sheets sang format STORE của HTML
-    if (data.rows) {
+
+    // 3. Nạp dữ liệu vào STORE (Xử lý để trống nếu không có dữ liệu)
+    if (data && data.rows) {
+      STORE = {}; // Làm sạch dữ liệu cũ
       data.rows.forEach(row => {
         const mIdx = parseInt(row.month) - 1;
         const key = storeKey(row.dept, row.year, mIdx);
-        STORE[key] = { ...row, _saved: true };
+        
+        // Đảm bảo các giá trị KPI null/undefined sẽ được giữ nguyên hoặc xử lý hiển thị sau này
+        STORE[key] = { ...row, _saved: true }; 
       });
     }
   } catch (e) {
-    console.error("Không thể tải dữ liệu từ Sheets, dùng demo tạm thời.");
-    seedDemo(); // Nếu lỗi thì dùng demo cũ
+    console.error("Lỗi kết nối hệ thống:", e);
+    // Chỉ hiện thông báo nếu thực sự không thể lấy dữ liệu
+    // alert("Không thể tải dữ liệu từ Sheets. Dashboard sẽ hiển thị trống."); 
   }
 
-  document.getElementById('global-loader').classList.add('hidden');
-  document.getElementById('pg-login').style.display = 'none';
-  document.getElementById('pg-app').style.display = 'flex';
+  // 4. Chuyển đổi giao diện (Ẩn loading, hiện App)
+  if (loader) loader.classList.add('hidden');
+  const pgLogin = document.getElementById('pg-login');
+  const pgApp = document.getElementById('pg-app');
+  
+  if (pgLogin) pgLogin.style.display = 'none';
+  if (pgApp) pgApp.style.display = 'flex';
+  
+  // 5. Cập nhật thông tin người dùng (An toàn - Tránh lỗi null textContent)
+  const av = document.getElementById('u-av');
+  const uName = document.getElementById('u-name');
+  const tBadge = document.getElementById('t-badge');
 
-  const av = document.getElementById('t-av');
-  av.textContent = user.initials; 
-  av.style.background = user.color + '25'; 
-  av.style.color = user.color;
-  document.getElementById('t-name').textContent = user.name;
+  if (av && user) {
+    av.textContent = user.initials || '';
+    av.style.background = (user.color || '#ccc') + '25';
+    av.style.color = user.color || '#333';
+  }
 
-  if (user.role === 'boss') {
-    document.getElementById('t-badge').textContent = 'Management';
-    document.getElementById('t-badge').className = 'tbadge tbadge-amber';
-    buildBossLeft();
-    renderBossRight();
-  } else {
-    document.getElementById('t-badge').textContent = user.dept;
-    document.getElementById('t-badge').className = 'tbadge tbadge-blue';
-    selDept = user.dept; selYear = NOW_Y; selMonth = NOW_M;
-    buildDeptLeft();
-    renderDeptRight();
+  if (uName && user) {
+    uName.textContent = user.name || 'User';
+  }
+
+  // 6. Phân quyền hiển thị Boss hoặc Staff
+  if (user && user.role === 'boss') {
+    if (tBadge) {
+      tBadge.textContent = 'Management';
+      tBadge.className = 'tbadge tbadge-amber';
+    }
+    if (typeof buildBossLeft === 'function') buildBossLeft();
+    if (typeof renderBossRight === 'function') renderBossRight();
+  } else if (user) {
+    if (tBadge) {
+      tBadge.textContent = user.dept;
+      tBadge.className = 'tbadge tbadge-blue';
+    }
+    selDept = user.dept; 
+    selYear = NOW_Y; 
+    selMonth = NOW_M;
+    if (typeof buildDeptLeft === 'function') buildDeptLeft();
+    if (typeof renderDeptRight === 'function') renderDeptRight();
   }
 }
 
@@ -643,6 +675,69 @@ function applyDateRange(){
 //   },500);
 // }
 
+// async function saveDept() {
+//   const dept = DEPTS.find(d => d.id === selDept);
+//   const spin = document.getElementById('save-spin');
+//   const lbl = document.getElementById('save-lbl');
+//   const ok = document.getElementById('save-ok');
+//   const err = document.getElementById('save-err');
+
+//   // Hiển thị trạng thái đang xử lý
+//   spin.style.display = 'inline-block';
+//   lbl.textContent = 'Uploading...';
+//   ok.style.display = 'none';
+//   err.style.display = 'none';
+
+//   // Gom dữ liệu từ các ô Input
+//   const kpiValues = {};
+//   dept.kpis.forEach(k => {
+//     const v = document.getElementById('ki-' + k.key)?.value;
+//     kpiValues[k.key] = v !== '' && v != null ? parseFloat(v) : 0;
+//   });
+
+//   const payload = {
+//     action: 'saveKPI',
+//     dept: selDept,
+//     month: selMonth + 1, // Sheets thường dùng 1-12, JS dùng 0-11
+//     year: selYear,
+//     user: user.username,
+//     comment: document.getElementById('ki-comment').value,
+//     kpis: kpiValues
+//   };
+
+//   try {
+//     // Gửi dữ liệu đến Google Apps Script
+//     // Lưu ý: mode 'no-cors' giúp gửi dữ liệu mà không bị chặn, nhưng ta không đọc được phản hồi
+//     await fetch(SCRIPT_URL, {
+//       method: 'POST',
+//       mode: 'no-cors', 
+//       cache: 'no-cache',
+//       headers: { 'Content-Type': 'application/json' },
+//       body: JSON.stringify(payload)
+//     });
+
+//     // Cập nhật giao diện sau khi gửi thành công
+//     spin.style.display = 'none';
+//     lbl.textContent = 'Save KPIs';
+//     ok.style.display = 'block';
+    
+//     // Lưu tạm vào STORE cục bộ để dashboard cập nhật ngay lập tức
+//     STORE[storeKey(selDept, selYear, selMonth)] = { ...payload, _saved: true };
+    
+//     document.getElementById('inp-badge').textContent = 'Submitted';
+//     document.getElementById('inp-badge').className = 'badge badge-green';
+    
+//     renderDeptRight();
+//     setTimeout(() => ok.style.display = 'none', 3000);
+
+//   } catch (e) {
+//     spin.style.display = 'none';
+//     lbl.textContent = 'Save KPIs';
+//     err.textContent = 'Error: ' + e.message;
+//     err.style.display = 'block';
+//   }
+// }
+
 async function saveDept() {
   const dept = DEPTS.find(d => d.id === selDept);
   const spin = document.getElementById('save-spin');
@@ -650,58 +745,67 @@ async function saveDept() {
   const ok = document.getElementById('save-ok');
   const err = document.getElementById('save-err');
 
-  // Hiển thị trạng thái đang xử lý
+  // Hiệu ứng loading
   spin.style.display = 'inline-block';
-  lbl.textContent = 'Uploading...';
+  lbl.textContent = 'Saving to Sheets...';
   ok.style.display = 'none';
   err.style.display = 'none';
 
-  // Gom dữ liệu từ các ô Input
-  const kpiValues = {};
-  dept.kpis.forEach(k => {
-    const v = document.getElementById('ki-' + k.key)?.value;
-    kpiValues[k.key] = v !== '' && v != null ? parseFloat(v) : 0;
-  });
-
+  // Thu thập dữ liệu từ các ô Input
   const payload = {
     action: 'saveKPI',
     dept: selDept,
-    month: selMonth + 1, // Sheets thường dùng 1-12, JS dùng 0-11
+    month: selMonth + 1, // Apps Script thường dùng 1-12
     year: selYear,
     user: user.username,
     comment: document.getElementById('ki-comment').value,
-    kpis: kpiValues
+    kpis: {}
   };
 
+  dept.kpis.forEach(k => {
+    const v = document.getElementById('ki-' + k.key).value;
+    payload.kpis[k.key] = v !== '' ? parseFloat(v) : null;
+  });
+
   try {
-    // Gửi dữ liệu đến Google Apps Script
-    // Lưu ý: mode 'no-cors' giúp gửi dữ liệu mà không bị chặn, nhưng ta không đọc được phản hồi
-    await fetch(SCRIPT_URL, {
+    const resp = await fetch(SCRIPT_URL, {
       method: 'POST',
-      mode: 'no-cors', 
-      cache: 'no-cache',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
-    // Cập nhật giao diện sau khi gửi thành công
-    spin.style.display = 'none';
-    lbl.textContent = 'Save KPIs';
-    ok.style.display = 'block';
-    
-    // Lưu tạm vào STORE cục bộ để dashboard cập nhật ngay lập tức
-    STORE[storeKey(selDept, selYear, selMonth)] = { ...payload, _saved: true };
-    
-    document.getElementById('inp-badge').textContent = 'Submitted';
-    document.getElementById('inp-badge').className = 'badge badge-green';
-    
-    renderDeptRight();
-    setTimeout(() => ok.style.display = 'none', 3000);
+    const result = await resp.json();
 
+    if (result.success) {
+      // CẬP NHẬT LOCAL STORE NGAY LẬP TỨC
+      const key = storeKey(selDept, selYear, selMonth);
+      STORE[key] = {
+        ...payload.kpis,
+        comment: payload.comment,
+        month: payload.month,
+        year: payload.year,
+        dept: payload.dept,
+        _saved: true
+      };
+
+      // Hiển thị thông báo thành công
+      spin.style.display = 'none';
+      lbl.textContent = 'Save KPIs';
+      ok.style.display = 'block';
+      document.getElementById('inp-badge').textContent = 'Submitted';
+      document.getElementById('inp-badge').className = 'badge badge-green';
+
+      // QUAN TRỌNG: Vẽ lại biểu đồ với dữ liệu mới
+      renderDeptRight(); 
+      
+      setTimeout(() => { ok.style.display = 'none'; }, 3000);
+    } else {
+      throw new Error(result.error || 'Server rejected');
+    }
   } catch (e) {
+    console.error("Save error:", e);
     spin.style.display = 'none';
     lbl.textContent = 'Save KPIs';
-    err.textContent = 'Error: ' + e.message;
+    err.textContent = 'Lỗi: ' + e.message;
     err.style.display = 'block';
   }
 }
