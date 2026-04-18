@@ -1606,8 +1606,10 @@ function updateUnreadUI(){
   // Populate dropdown list
   if(notifList){
     // Sort alphabetically
-    var unreadDepts = DEPTS.filter(function(d){return getUnreadCount(d.id)>0;})
-                          .sort(function(a,b){return a.name.localeCompare(b.name);});
+    // Only show unread for depts the user can see
+    var scanDepts = (U&&U.role==='dept') ? DEPTS.filter(function(d){return d.id===U.dept;}) : DEPTS;
+    var unreadDepts = scanDepts.filter(function(d){return getUnreadCount(d.id)>0;})
+                               .sort(function(a,b){return a.name.localeCompare(b.name);});
     if(!unreadDepts.length){
       notifList.innerHTML='<div class="notif-empty">No unread messages</div>';
     } else {
@@ -1879,7 +1881,10 @@ function getMsgSheetUrl(){
 function loadMsgsFromGAS(dept, cb){
   if(!MSG_SHEET_GID){
     // No sheet tab yet → use localStorage only
-    if(cb) cb(getMsgs().filter(function(m){return !dept||m.dept===dept;}));
+    var localAll=getMsgs();
+    // Dept users should only see own dept
+    if(U&&U.role==='dept') localAll=localAll.filter(function(m){return m.dept===U.dept;});
+    if(cb) cb(dept ? localAll.filter(function(m){return m.dept===dept;}) : localAll);
     return;
   }
   var url = getMsgSheetUrl(); // CSV export URL, CORS-free
@@ -1913,12 +1918,15 @@ function loadMsgsFromGAS(dept, cb){
       sheetMsgs.sort(function(a,b){return String(a.ts)<String(b.ts)?-1:1;});
       // Filter by dept if requested
       var result = dept ? sheetMsgs.filter(function(m){return m.dept===dept;}) : sheetMsgs;
-      saveMsgsLocal(sheetMsgs); // save full list locally
+      // For dept users: only cache own dept msgs to prevent cross-dept leakage
+      var toCache = (U&&U.role==='dept') ? sheetMsgs.filter(function(m){return m.dept===U.dept;}) : sheetMsgs;
+      saveMsgsLocal(toCache);
       if(cb) cb(result);
     })
     .catch(function(){
       // Sheet unavailable → fall back to localStorage
       var local = getMsgs();
+      if(U&&U.role==='dept') local=local.filter(function(m){return m.dept===U.dept;});
       if(cb) cb(dept ? local.filter(function(m){return m.dept===dept;}) : local);
     });
 }
