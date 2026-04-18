@@ -1001,7 +1001,7 @@ function renderOverlayChart(col, cid, oc, range, did, gridMode){
   // Outer wrapper: for twoBar charts use split layout (monthly | total)
   var wrapper=document.createElement('div');
   wrapper.className='cc';
-  wrapper.dataset.chartId=cid;
+  wrapper.dataset.chartId=cid;wrapper.dataset.chartTitle=oc.title;wrapper.dataset.chartSub=rangeLabel(range)
   wrapper.dataset.chartTitle=oc.title;
   var clickHint=gridMode?'<div class="cc-clickhint">Click to expand</div>':'';
   if(isTwoBarCheck){
@@ -1049,7 +1049,8 @@ function renderOverlayChart(col, cid, oc, range, did, gridMode){
   var opts=chartOpts(oc.unit||'');
   if(isTwoBar){opts.scales.y2={type:'linear',position:'right',
     grid:{drawOnChartArea:false},
-    ticks:{font:{size:10},callback:function(v){return v+'%';}}};}
+    ticks:{font:{size:10},color:'#6366F1',callback:function(v){return v+'%';}},
+    title:{display:true,text:'Ratio %',color:'#6366F1',font:{size:10,weight:'600'}}};}
   opts.plugins.datalabels={
     display:function(ctx){return ctx.dataset.type==='bar'&&!many;},
     color:'#333',anchor:'end',align:'top',font:{size:9,weight:'600'},
@@ -1397,16 +1398,16 @@ function chartOpts(unit){
       if(unit==='hrs'||unit==='count'||unit==='cnt'||unit==='ppl')return Math.round(v).toLocaleString();
       return(Math.round(v*100)/100).toString();
     }}}},
+    layout:{padding:{top:14}},
     scales:{
       y:{beginAtZero:false,grid:{color:'rgba(0,0,0,.05)'},
-         // V14: min = dataMin × 0.90 so lowest point is clearly visible
          afterDataLimits:function(axis){
            var range=axis.max-axis.min;
-           // For zero-based units (counts, integers) keep 0 as min
-           if(unit==='count'||unit==='cnt'||unit==='ppl'||unit==='No.'||unit==='Rate'){
-             axis.min=0;return;
-           }
-           // Pad bottom by 10% of visible range
+           var isCountUnit=unit==='count'||unit==='cnt'||unit==='ppl'||unit==='No.'||unit==='Rate';
+           // Pad TOP by 15% so datalabels above tallest bar are not clipped
+           axis.max=axis.max+range*0.15;
+           // Bottom padding
+           if(isCountUnit){axis.min=0;return;}
            if(axis.min>0)axis.min=Math.max(0,axis.min-range*0.10);
            else axis.min=axis.min-Math.abs(axis.min)*0.10;
          },
@@ -1694,14 +1695,15 @@ function pushPasswordToGAS(username, newPass, onDone, onFail){
 // DRILL-DOWN — click chart → full-screen modal
 // ═══════════════════════════════════════════════
 var drillChart=null;
-function openDrill(title, chartInstance){
+function openDrill(title, chartInstance, sub){
   if(!chartInstance) return;
   var ov=el('drill-ov');
   el('drill-title').textContent=title;
+  if(el('drill-sub'))el('drill-sub').textContent=sub||'';
   // Build legend from chart datasets
   var legHtml='';
   if(chartInstance&&chartInstance.data&&chartInstance.data.datasets){
-    var dsList=chartInstance.data.datasets.filter(function(ds){return ds.label&&ds.label!=='Ratio %';});
+    var dsList=chartInstance.data.datasets.filter(function(ds){return ds.label;});
     if(dsList.length>1||chartInstance.config.type==='bar'){
       legHtml='<div class="drill-legend-row">'
         +dsList.map(function(ds){
@@ -1725,10 +1727,22 @@ function openDrill(title, chartInstance){
     options:JSON.parse(JSON.stringify(src.config.options)),
     plugins:src.config.plugins
   };
-  // Bigger fonts for drill view
+  // Bigger fonts + restore afterDataLimits + layout padding for drill view
+  if(!cfg.options.layout) cfg.options.layout={};
+  cfg.options.layout.padding={top:20};
   if(cfg.options.scales){
     if(cfg.options.scales.x) cfg.options.scales.x.ticks={font:{size:11}};
-    if(cfg.options.scales.y) cfg.options.scales.y.ticks={font:{size:11}};
+    if(cfg.options.scales.y){
+      cfg.options.scales.y.ticks={font:{size:11}};
+      // Re-apply afterDataLimits (lost by JSON.parse — functions stripped)
+      cfg.options.scales.y.afterDataLimits=function(axis){
+        var range=axis.max-axis.min;
+        axis.max=axis.max+range*0.15; // top pad
+        if(axis.min>0)axis.min=Math.max(0,axis.min-range*0.10);
+        // For zero-based charts keep min at 0
+        if(axis.min<0)axis.min=0;
+      };
+    }
   }
   if(cfg.options.plugins&&cfg.options.plugins.datalabels){
     cfg.options.plugins.datalabels.font={size:11,weight:'700'};
@@ -1926,9 +1940,26 @@ document.addEventListener('DOMContentLoaded',function(){
   el('drill-ov').addEventListener('click',function(e){if(e.target===el('drill-ov'))closeDrill();});
   el('drill-exp-btn').addEventListener('click',function(){
     if(!drillChart)return;
+    // Build filename: title + date-range + timestamp
+    var title=(el('drill-title').textContent||'chart').replace(/[/\\?%*:|"<>]/g,'-').trim();
+    var now=new Date();
+    var ts=now.getFullYear()+''+String(now.getMonth()+1).padStart(2,'0')
+           +String(now.getDate()).padStart(2,'0')
+           +'-'+String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0');
+    var rangeStr=(el('drill-sub')?el('drill-sub').textContent:'').replace(/→/g,'to').replace(/\s+/g,'-').trim();
+    var filename=title+(rangeStr?'_'+rangeStr:'')+'_'+ts+'.png';
+    // Render with white background (prevents transparent/checkerboard)
+    var origCanvas=drillChart.canvas;
+    var tmpCanvas=document.createElement('canvas');
+    tmpCanvas.width=origCanvas.width;
+    tmpCanvas.height=origCanvas.height;
+    var tmpCtx=tmpCanvas.getContext('2d');
+    tmpCtx.fillStyle='#ffffff';
+    tmpCtx.fillRect(0,0,tmpCanvas.width,tmpCanvas.height);
+    tmpCtx.drawImage(origCanvas,0,0);
     var a=document.createElement('a');
-    a.href=drillChart.toBase64Image();
-    a.download=(el('drill-title').textContent||'chart')+'.png';
+    a.href=tmpCanvas.toDataURL('image/png');
+    a.download=filename;
     a.click();
   });
 
@@ -1937,7 +1968,10 @@ document.addEventListener('DOMContentLoaded',function(){
     var cc=e.target.closest('.charts-grid .cc');
     if(cc&&cc.dataset.chartId){
       var chart=CH[cc.dataset.chartId];
-      if(chart) openDrill(cc.dataset.chartTitle||'Chart Detail', chart);
+      if(chart){
+        var sub=cc.dataset.chartSub||'';
+        openDrill(cc.dataset.chartTitle||'Chart Detail',chart,sub);
+      }
     }
   });
 
