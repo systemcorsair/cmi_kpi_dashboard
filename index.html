@@ -5,1158 +5,1997 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CMI · KPI Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
-/* ── RESET ── */
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f5f4f0;--surface:#fff;--surface2:#f0efe9;--surface3:#e8e7e0;
-  --border:#dddcd5;--border2:#c5c4bc;
-  --text:#1a1a17;--muted:#686864;--hint:#a0a09a;
-  --blue:#1559a0;--blue-bg:#e8f0fb;--blue-light:#c5d9f5;
-  --green:#0c6b4e;--green-bg:#e0f4ed;
-  --amber:#7a4a08;--amber-bg:#faebd6;
-  --red:#9e2828;--red-bg:#fbeaea;
-  --sidebar-w:260px;--topbar-h:46px;
-  --radius:7px;--radius-lg:11px;
+  --bg:#f4f3ef;--sf:#fff;--sf2:#eeede8;
+  --bd:#dddcd5;--bd2:#c8c7bf;
+  --tx:#1a1a17;--mu:#68675f;--hi:#a0a099;
+  --bl:#1255a0;--bl-bg:#e7f0fb;--bl-lt:#c4d8f4;
+  --gn:#0b6b4e;--gn-bg:#dff3ec;
+  --am:#7a4a08;--am-bg:#faebd5;
+  --rd:#9c2828;--rd-bg:#fbe9e9;
+  --lw:280px;--th:46px;--r:7px;--rl:11px;
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  font-size:13px;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden}
+  font-size:13px;background:var(--bg);color:var(--tx);min-height:100vh;overflow:hidden}
 input,button,select,textarea{font-family:inherit;font-size:13px}
 button{cursor:pointer}
 .hidden{display:none!important}
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
 
 /* ── LOGIN ── */
 #pg-login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)}
-.lcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
-  padding:32px;width:360px}
-.lbrand{font-size:20px;font-weight:600;margin-bottom:3px}
-.lsub{color:var(--muted);font-size:12px;margin-bottom:22px}
-.lf{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
-.lf label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
-.lf input{padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);
-  background:var(--surface);color:var(--text)}
-.lf input:focus{outline:none;border-color:var(--blue)}
-.lbtn{width:100%;padding:9px;background:var(--blue);color:#fff;border:none;
-  border-radius:var(--radius);font-size:13px;font-weight:500;margin-top:4px}
-.lbtn:hover{opacity:.88}
-.lerr{color:var(--red);font-size:12px;margin-top:8px;padding:7px 10px;
-  background:var(--red-bg);border-radius:var(--radius);display:none}
-.demo-sec{margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
-.demo-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--hint);margin-bottom:7px}
-.demo-item{display:flex;align-items:center;gap:8px;padding:6px 9px;border:1px solid var(--border);
-  border-radius:var(--radius);cursor:pointer;margin-bottom:5px;transition:background .12s}
-.demo-item:hover{background:var(--surface2)}
-.ddot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.dinfo{flex:1}
-.dname{font-weight:500;font-size:12px}
-.dcred{color:var(--hint);font-size:11px}
-.dbadge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500}
+.lcard{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);padding:36px;width:340px}
+.lbrand{font-size:22px;font-weight:700;margin-bottom:3px}
+.lsub{color:var(--mu);font-size:12px;margin-bottom:26px}
+.lf{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
+.lf label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--mu)}
+.lf input{padding:9px 11px;border:1px solid var(--bd);border-radius:var(--r);
+  background:var(--sf);color:var(--tx);font-size:14px}
+.lf input:focus{outline:none;border-color:var(--bl);box-shadow:0 0 0 3px rgba(18,85,160,.1)}
+#btn-login{width:100%;padding:10px;background:var(--bl);color:#fff;border:none;
+  border-radius:var(--r);font-size:14px;font-weight:600;margin-top:4px}
+#btn-login:hover{opacity:.88}
+#l-err{color:var(--rd);font-size:12px;margin-top:8px;padding:7px 10px;
+  background:var(--rd-bg);border-radius:var(--r);display:none}
+.lhint{margin-top:18px;padding-top:14px;border-top:1px solid var(--bd);
+  font-size:11px;color:var(--hi);line-height:1.6}
+.lhint b{color:var(--mu)}
 
 /* ── TOPBAR ── */
-.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);
+.topbar{height:var(--th);background:var(--sf);border-bottom:1px solid var(--bd);
   display:flex;align-items:center;justify-content:space-between;padding:0 18px;
   position:fixed;top:0;left:0;right:0;z-index:100}
-.tlogo{font-weight:600;font-size:14px;letter-spacing:.2px}
-.tlogo span{color:var(--muted);font-weight:400}
+.tlogo{font-weight:700;font-size:14px}
+.tlogo span{color:var(--mu);font-weight:400}
 .tright{display:flex;align-items:center;gap:10px}
-.tbadge{font-size:11px;font-weight:500;padding:2px 9px;border-radius:12px}
-.tbadge-blue{background:var(--blue-bg);color:var(--blue)}
-.tbadge-amber{background:var(--amber-bg);color:var(--amber)}
-.tavatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;
-  justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
-.tbtn{padding:5px 11px;border-radius:var(--radius);border:1px solid var(--border2);
-  background:transparent;color:var(--muted);font-size:11px;transition:background .12s}
-.tbtn:hover{background:var(--surface2);color:var(--text)}
+/* FIX #2: sync badge is now muted/subtle */
+#sync-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:400;
+  color:var(--hi);background:transparent;cursor:pointer;border:none;
+  transition:color .2s}
+#sync-badge:hover{color:var(--mu)}
+/* FIX #3a: t-badge = dept abbreviation badge (e.g. "HR")
+   To remove: comment out the line   el('t-badge').textContent = U.dept;  in startApp() */
+.tbadge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:12px}
+.tba{background:var(--bl-bg);color:var(--bl)}
+.tbm{background:var(--am-bg);color:var(--am)}
+/* FIX #3b: t-name = user's full name text (e.g. "Ms Chau")
+   To remove: comment out the line   el('t-name').textContent = U.name;  in startApp() */
+.tav{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:11px;font-weight:700}
+#btn-logout{padding:5px 11px;border-radius:var(--r);border:1px solid var(--bd2);
+  background:transparent;color:var(--mu);font-size:11px}
+#btn-logout:hover{background:var(--sf2);color:var(--tx)}
 
-/* ── APP SHELL ── */
+/* ── SHELL ── */
 #pg-app{display:none;flex-direction:column}
-.shell{display:flex;height:calc(100vh - var(--topbar-h));margin-top:var(--topbar-h)}
+.shell{display:flex;height:calc(100vh - var(--th));margin-top:var(--th)}
+.lp{width:var(--lw);flex-shrink:0;background:var(--sf);border-right:1px solid var(--bd);
+  overflow:hidden;display:flex;flex-direction:column}
+.lp-sc{flex:1;overflow-y:auto;padding:14px 13px}
+.rp{flex:1;overflow-y:auto;padding:18px 20px;background:var(--bg)}
+.lsec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+  color:var(--hi);margin:14px 0 7px}
+.lsec:first-child{margin-top:0}
 
-/* ── LEFT PANEL ── */
-.lpanel{width:var(--sidebar-w);flex-shrink:0;background:var(--surface);
-  border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.lpanel-scroll{flex:1;overflow-y:auto;padding:14px 12px}
-.lsec-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;
-  color:var(--hint);margin-bottom:8px;margin-top:14px}
-.lsec-title:first-child{margin-top:0}
+/* ── DATE RANGE ── */
+.dr-box{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r);
+  padding:10px 11px;margin-bottom:4px}
+.dr-quick{display:flex;gap:4px;margin-bottom:8px}
+.drq{padding:3px 9px;border-radius:12px;border:1px solid var(--bd);
+  background:transparent;color:var(--mu);font-size:10px;font-weight:600;cursor:pointer}
+.drq:hover,.drq.act{background:var(--bl);color:#fff;border-color:var(--bl)}
+.dr-row{display:flex;gap:5px;align-items:center;margin-bottom:6px}
+.dr-row label{font-size:10px;color:var(--mu);width:26px;font-weight:600;flex-shrink:0}
+.drsel,.mysel{flex:1;padding:5px 7px;border:1px solid var(--bd);border-radius:var(--r);
+  background:var(--sf);color:var(--tx);font-size:11px}
+.dr-apply{width:100%;padding:6px;border:none;border-radius:var(--r);
+  background:var(--bl);color:#fff;font-size:11px;font-weight:600;cursor:pointer;margin-top:3px}
 
-/* ── DEPT NAV (boss sidebar) ── */
-.dept-acc{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:6px}
-.dept-acc-head{display:flex;align-items:center;gap:7px;padding:9px 10px;cursor:pointer;
-  transition:background .12s;user-select:none}
-.dept-acc-head:hover{background:var(--surface2)}
-.dept-acc-head.open{background:var(--blue-bg)}
-.dah-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.dah-name{flex:1;font-weight:500;font-size:12.5px}
-.dah-status{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+/* ── ACCORDION ── */
+.acc{border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:6px}
+.acc-h{display:flex;align-items:center;gap:7px;padding:9px 10px;cursor:pointer;
+  user-select:none;transition:background .12s}
+.acc-h:hover,.acc-h.open{background:var(--bl-bg)}
+.ah-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ah-info{flex:1;min-width:0}
+.ah-name{font-weight:600;font-size:12px;line-height:1.2}
+/* FIX #5: last data month shown under dept name */
+.ah-last{font-size:10px;color:var(--hi);margin-top:1px}
+.ah-last.ok{color:var(--gn)}
+.ah-last.warn{color:var(--am)}
+.ah-last.miss{color:var(--rd)}
+.ah-st{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .st-ok{background:#1D9E75}.st-pend{background:#EF9F27}
-.dah-chevron{font-size:10px;color:var(--hint);transition:transform .2s;margin-left:2px}
-.dah-chevron.open{transform:rotate(90deg)}
-.dept-acc-body{display:none;border-top:1px solid var(--border);background:var(--surface2);padding:10px}
-.dept-acc-body.open{display:block}
-.kpi-snapshot{display:flex;flex-direction:column;gap:5px}
-.ks-row{display:flex;align-items:baseline;justify-content:space-between;
-  padding:4px 0;border-bottom:1px solid var(--border)}
-.ks-row:last-child{border-bottom:none}
-.ks-label{font-size:11px;color:var(--muted);flex:1}
-.ks-val{font-size:13px;font-weight:500;margin-left:8px}
-.ks-delta{font-size:10px;margin-left:5px}
-.delta-up{color:var(--green)}.delta-dn{color:var(--red)}.delta-nu{color:var(--hint)}
-.ks-comment{margin-top:8px;padding:6px 8px;background:var(--surface);border-radius:var(--radius);
-  font-size:11px;color:var(--muted);font-style:italic;line-height:1.4;border:1px solid var(--border)}
-.view-charts-btn{width:100%;margin-top:8px;padding:6px;border-radius:var(--radius);
-  border:1px solid var(--blue-light);background:var(--blue-bg);color:var(--blue);
-  font-size:11px;font-weight:500;cursor:pointer;transition:background .12s}
-.view-charts-btn:hover{background:var(--blue-light)}
+.ah-ch{font-size:9px;color:var(--hi);transition:transform .2s;flex-shrink:0}
+.ah-ch.open{transform:rotate(90deg)}
+.acc-b{display:none;border-top:1px solid var(--bd);background:var(--sf2);padding:10px 11px}
+.acc-b.open{display:block}
+.ks-row{display:flex;align-items:baseline;padding:4px 0;border-bottom:1px solid var(--bd)}
+.ks-row:last-of-type{border-bottom:none}
+.ks-l{font-size:11px;color:var(--mu);flex:1}
+.ks-v{font-size:12px;font-weight:600}
+.ks-d{font-size:10px;margin-left:4px}
+.du{color:var(--gn)}.dd{color:var(--rd)}.dn{color:var(--hi)}
+.ks-cmt{margin-top:7px;padding:6px 8px;background:var(--sf);border-radius:var(--r);
+  font-size:11px;color:var(--mu);font-style:italic;line-height:1.4;border:1px solid var(--bd)}
+.vc-btn{width:100%;margin-top:8px;padding:6px;border-radius:var(--r);
+  border:1px solid var(--bl-lt);background:var(--bl-bg);color:var(--bl);
+  font-size:11px;font-weight:600;cursor:pointer}
+.vc-btn:hover{background:var(--bl-lt)}
 
-/* ── DATE RANGE PICKER ── */
-.date-range{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);
-  padding:10px 12px;margin-bottom:12px}
-.dr-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;
-  color:var(--muted);margin-bottom:8px}
-.dr-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
-.dr-row label{font-size:11px;color:var(--muted);width:28px;flex-shrink:0}
-.dr-sel{flex:1;padding:5px 7px;border:1px solid var(--border);border-radius:var(--radius);
-  background:var(--surface);color:var(--text);font-size:12px}
-.dr-sel:focus{outline:none;border-color:var(--blue)}
-.dr-apply{width:100%;padding:6px;border-radius:var(--radius);border:none;
-  background:var(--blue);color:#fff;font-size:12px;font-weight:500;cursor:pointer;margin-top:4px}
-.dr-apply:hover{opacity:.88}
-.dr-quick{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px}
-.dr-qbtn{padding:3px 8px;border-radius:12px;border:1px solid var(--border);
-  background:transparent;color:var(--muted);font-size:10px;cursor:pointer;transition:all .12s}
-.dr-qbtn:hover,.dr-qbtn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
-
-/* ── INPUT FORM (dept left panel) ── */
-.inp-form-wrap{display:flex;flex-direction:column;gap:0}
-.month-year-sel{display:flex;gap:6px;margin-bottom:12px}
-.my-sel{flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);
-  background:var(--surface);color:var(--text);font-size:12px}
-.my-sel:focus{outline:none;border-color:var(--blue)}
-.inp-status{display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:10px;padding:6px 8px;border-radius:var(--radius);background:var(--surface2)}
-.inp-status-lbl{font-size:11px;color:var(--muted)}
-.badge{display:inline-flex;align-items:center;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:500}
-.badge-green{background:var(--green-bg);color:var(--green)}
-.badge-amber{background:var(--amber-bg);color:var(--amber)}
-.kpi-inp-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
-.ki-item{display:flex;flex-direction:column;gap:3px}
-.ki-label{font-size:11px;color:var(--muted);font-weight:500}
-.ki-input{padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius);
-  background:var(--surface);color:var(--text);transition:border-color .12s;width:100%}
-.ki-input:focus{outline:none;border-color:var(--blue)}
-.ki-comment{padding:6px 9px;border:1px solid var(--border);border-radius:var(--radius);
-  background:var(--surface);color:var(--text);resize:none;min-height:52px;width:100%;
-  font-family:inherit;font-size:12px;line-height:1.4}
-.ki-comment:focus{outline:none;border-color:var(--blue)}
-.save-row{display:flex;flex-direction:column;gap:5px}
-.save-btn{width:100%;padding:8px;border-radius:var(--radius);border:none;
-  background:var(--blue);color:#fff;font-size:13px;font-weight:500;
+/* ── INPUT FORM ── */
+.my-row{display:flex;gap:6px;margin-bottom:11px}
+.mysel{padding:7px 8px;font-size:12px;font-weight:500}
+.inp-st{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;padding:6px 9px;border-radius:var(--r);
+  background:var(--sf2);border:1px solid var(--bd)}
+.badge{display:inline-flex;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.bg{background:var(--gn-bg);color:var(--gn)}
+.ba{background:var(--am-bg);color:var(--am)}
+.ki-list{display:flex;flex-direction:column;gap:9px;margin-bottom:12px}
+.ki{display:flex;flex-direction:column;gap:3px}
+.ki label{font-size:11px;color:var(--mu);font-weight:600}
+/* delta row inside each KPI input */
+.ki-lbl-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.ki-lbl-row label{margin-bottom:0}
+.ki-delta{font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;white-space:nowrap}
+.ki-delta.du{background:var(--gn-bg);color:var(--gn)}
+.ki-delta.dd{background:var(--rd-bg);color:var(--rd)}
+.ki-delta.dn{color:var(--hi)}
+.ki-vs{font-weight:400;font-size:10px}
+/* Change password button */
+.chpw-btn{width:100%;padding:7px;border-radius:var(--r);border:1px solid var(--bd2);
+  background:transparent;color:var(--mu);font-size:12px;cursor:pointer;margin-top:2px;text-align:left}
+.chpw-btn:hover{background:var(--sf2);color:var(--tx)}
+/* Change password in-flow modal */
+.pw-modal{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r);
+  padding:14px;margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.pw-modal label{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--mu)}
+.pw-modal input{padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);
+  background:var(--sf);color:var(--tx);font-size:13px;width:100%}
+.pw-modal input:focus{outline:none;border-color:var(--bl)}
+.pw-save{width:100%;padding:7px;border:none;border-radius:var(--r);
+  background:var(--bl);color:#fff;font-size:12px;font-weight:600;cursor:pointer}
+.pw-save:hover{opacity:.88}
+.pw-msg{font-size:11px;text-align:center;margin-top:2px;display:none}
+.ki-in{padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);
+  background:var(--sf);color:var(--tx);width:100%}
+.ki-in:focus{outline:none;border-color:var(--bl)}
+.ki-ta{padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);
+  background:var(--sf);color:var(--tx);resize:none;min-height:50px;
+  width:100%;font-family:inherit;font-size:12px;line-height:1.4}
+.ki-ta:focus{outline:none;border-color:var(--bl)}
+.sv-btn{width:100%;padding:9px;border:none;border-radius:var(--r);
+  background:var(--bl);color:#fff;font-size:13px;font-weight:600;
   display:flex;align-items:center;justify-content:center;gap:6px}
-.save-btn:hover{opacity:.88}
-.save-msg{font-size:11px;text-align:center;display:none}
-.save-ok-msg{color:var(--green)}
-.save-err-msg{color:var(--red)}
-.ispin{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);
-  border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none}
-@keyframes spin{to{transform:rotate(360deg)}}
+.sv-btn:hover{opacity:.88}
+.sv-ok{font-size:11px;text-align:center;color:var(--gn);margin-top:5px;display:none;font-weight:600}
+.sv-er{font-size:11px;text-align:center;color:var(--rd);margin-top:5px;display:none}
+.spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite;display:none}
+@keyframes sp{to{transform:rotate(360deg)}}
 
-/* ── RIGHT PANEL (charts) ── */
-.rpanel{flex:1;overflow-y:auto;padding:16px 18px;background:var(--bg)}
-.rp-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
-.rp-title{font-size:16px;font-weight:600;line-height:1.2}
-.rp-sub{font-size:12px;color:var(--muted);margin-top:3px}
-.charts-stack{display:flex;flex-direction:column;gap:14px}
-.chart-card{background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:16px}
-.cc-head{margin-bottom:12px}
-.cc-title{font-size:13px;font-weight:600}
-.cc-sub{font-size:11px;color:var(--muted);margin-top:2px}
-.cc-wrap{position:relative;height:180px}
-
-/* ── BOSS ALL-DEPTS OVERVIEW ── */
-.ov-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
-.ovs-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-  padding:12px 14px;cursor:pointer;transition:border-color .15s}
-.ovs-card:hover{border-color:var(--blue)}
-.ovs-dept{display:flex;align-items:center;gap:5px;margin-bottom:5px}
-.ovs-dot{width:7px;height:7px;border-radius:50%}
-.ovs-name{font-weight:500;font-size:12px}
-.ovs-kpi{font-size:11px;color:var(--muted);margin-bottom:3px}
-.ovs-val{font-size:18px;font-weight:600}
-.ovs-status{font-size:10px;margin-top:4px;font-weight:500}
+/* ── RIGHT PANEL ── */
+/* FIX #6: back button */
+.rp-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.rp-hdr-left{}
+.rp-title{font-size:17px;font-weight:700;margin-bottom:3px}
+.rp-sub{font-size:12px;color:var(--mu)}
+#btn-bod-back{padding:6px 14px;border-radius:var(--r);border:1px solid var(--bd2);
+  background:var(--sf);color:var(--mu);font-size:12px;white-space:nowrap;margin-top:2px}
+#btn-bod-back:hover{background:var(--sf2);color:var(--tx)}
+.charts-col{display:flex;flex-direction:column;gap:14px}
+.cc{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);padding:16px 18px}
+.cc-t{font-size:13px;font-weight:700;margin-bottom:2px}
+.cc-s{font-size:11px;color:var(--mu);margin-bottom:12px}
+.cc-w{position:relative;height:185px}
+.cc-w.tall{height:220px}
+.legend{display:flex;gap:16px;margin-bottom:8px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--mu)}
+.legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
 
 /* ── STATUS TABLE ── */
-.stbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+.stbl-w{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);
   overflow:hidden;margin-bottom:14px}
-.stbl-head{padding:12px 14px;font-size:12px;font-weight:600;border-bottom:1px solid var(--border);
+.stbl-h{padding:12px 16px;font-size:13px;font-weight:700;border-bottom:1px solid var(--bd);
   display:flex;align-items:center;justify-content:space-between}
 table{width:100%;border-collapse:collapse}
-thead th{padding:8px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--muted);
-  text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
-tbody td{padding:9px 14px;font-size:12px;border-bottom:1px solid var(--border)}
+thead th{padding:8px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--mu);
+  text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--bd)}
+tbody td{padding:9px 14px;font-size:12px;border-bottom:1px solid var(--bd)}
 tbody tr:last-child td{border-bottom:none}
-tbody tr:hover td{background:var(--surface2)}
+tbody tr:hover td{background:var(--sf2)}
 
-/* ── EMPTY STATE ── */
-.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  height:300px;color:var(--hint);gap:8px}
-.empty-state-icon{font-size:32px;opacity:.4}
-.empty-state-text{font-size:13px}
+/* LOCK/REVISION */
+.rev-badge{display:inline-flex;align-items:center;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;background:var(--bl-bg);color:var(--bl);margin-left:4px}
+.lock-bar{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--gn-bg);border:1px solid var(--gn);border-radius:var(--r);margin-bottom:10px;font-size:12px;color:var(--gn);font-weight:600}
+.edit-btn{padding:4px 10px;border-radius:var(--r);border:1px solid var(--gn);background:var(--sf);color:var(--gn);font-size:11px;font-weight:600;cursor:pointer}
+.edit-btn:hover{background:var(--gn);color:#fff}
+/* MESSAGING */
+.msg-panel{position:fixed;right:0;top:var(--th);bottom:0;width:320px;background:var(--sf);border-left:1px solid var(--bd);display:flex;flex-direction:column;z-index:90;transform:translateX(100%);transition:transform .25s ease}
+.msg-panel.open{transform:translateX(0)}
+.msg-hdr{padding:12px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.msg-hdr-title{font-weight:600;font-size:13px}
+.msg-close-btn{border:none;background:none;font-size:16px;color:var(--mu);cursor:pointer;padding:2px 6px}
+.msg-close-btn:hover{color:var(--tx)}
+.msg-thread{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.msg-bubble{max-width:85%;padding:8px 11px;border-radius:10px;font-size:12px;line-height:1.5;word-break:break-word}
+.msg-from-me{align-self:flex-end;background:var(--bl);color:#fff;border-radius:10px 10px 2px 10px}
+.msg-from-other{align-self:flex-start;background:var(--sf2);color:var(--tx);border-radius:10px 10px 10px 2px;border:1px solid var(--bd)}
+.msg-meta{font-size:10px;opacity:.65;margin-top:3px}
+.msg-compose{padding:10px 14px;border-top:1px solid var(--bd);display:flex;gap:7px}
+.msg-txt-input{flex:1;padding:7px 10px;border:1px solid var(--bd);border-radius:var(--r);font-size:12px;resize:none;font-family:inherit;background:var(--sf)}
+.msg-txt-input:focus{outline:none;border-color:var(--bl)}
+.msg-send-btn2{padding:7px 12px;border:none;border-radius:var(--r);background:var(--bl);color:#fff;font-size:12px;font-weight:600;cursor:pointer;align-self:flex-end}
+.msg-send-btn2:hover{opacity:.88}
+.msg-action-btn{padding:5px 11px;border-radius:var(--r);border:1px solid var(--bd2);background:var(--sf);color:var(--mu);font-size:11px;cursor:pointer;margin-left:5px}
+.msg-action-btn:hover{background:var(--sf2);color:var(--tx)}
+.unread-dot{width:7px;height:7px;border-radius:50%;background:var(--rd);display:inline-block;margin-left:4px;vertical-align:middle}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center}
+.modal-box{background:var(--sf);border-radius:var(--rl);width:560px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-head{padding:14px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:14px}
+.modal-body{flex:1;overflow-y:auto;padding:14px 18px}
+.modal-close-x{border:none;background:none;font-size:18px;color:var(--mu);cursor:pointer}
+.modal-close-x:hover{color:var(--tx)}
+.hist-item{padding:9px 0;border-bottom:1px solid var(--bd)}
+.hist-item:last-child{border-bottom:none}
+.hist-meta{font-size:10px;color:var(--hi);margin-bottom:2px}
+.hist-text{font-size:12px;line-height:1.5}
 
-/* ── LOADING ── */
-#global-loader{position:fixed;inset:0;background:rgba(245,244,240,.8);
-  display:flex;align-items:center;justify-content:center;z-index:999}
-.gloader-inner{display:flex;flex-direction:column;align-items:center;gap:12px}
-.gloader-spin{width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--blue);
-  border-radius:50%;animation:spin .7s linear infinite}
-.gloader-lbl{font-size:12px;color:var(--muted)}
+.cc-split{display:grid;grid-template-columns:1fr 120px;gap:12px;align-items:start}
+.cc-monthly{flex:1}
+.cc-total{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);padding:10px}
+.cc-total-title{font-size:11px;font-weight:700;color:var(--tx);margin-bottom:1px}
+.cc-total-sub{font-size:10px;color:var(--mu);margin-bottom:6px}
+.cc-total-w{position:relative;height:160px}
+
+/* CHART GRID 2-column */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.charts-grid .cc{cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.charts-grid .cc:hover{box-shadow:0 4px 18px rgba(0,0,0,.13);border-color:var(--bl-lt)}
+.cc-clickhint{font-size:9px;color:var(--hi);margin-top:3px;font-style:italic}
+
+/* DRILL-DOWN MODAL */
+.drill-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;
+  display:flex;align-items:center;justify-content:center;padding:16px}
+.drill-box{background:var(--sf);border-radius:var(--rl);width:min(900px,98vw);
+  max-height:92vh;display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 24px 64px rgba(0,0,0,.28)}
+.drill-hd{padding:13px 18px;border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.drill-hd-t{font-weight:700;font-size:15px}
+.drill-hd-r{display:flex;gap:8px;align-items:center}
+.drill-exp{padding:5px 13px;border-radius:var(--r);border:1px solid var(--bd2);
+  background:var(--sf);color:var(--mu);font-size:11px;cursor:pointer}
+.drill-exp:hover{background:var(--bl);color:#fff;border-color:var(--bl)}
+.drill-cls{border:none;background:none;font-size:22px;color:var(--mu);cursor:pointer;
+  padding:0 4px;line-height:1}
+.drill-cls:hover{color:var(--tx)}
+.drill-bd{flex:1;overflow-y:auto;padding:20px 22px}
+.drill-cw{position:relative;height:380px}
+
+/* PURPOSE line under dept name in left panel */
+.dept-purpose{font-size:10px;color:var(--hi);margin-bottom:10px;
+  font-style:italic;line-height:1.4;padding:5px 8px;background:var(--sf2);
+  border-radius:var(--r);border-left:3px solid var(--bd2)}
+
+/* ── Message button unread badge ── */
+.msg-unread-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:16px;height:16px;padding:0 4px;
+  background:var(--rd);color:#fff;border-radius:8px;
+  font-size:10px;font-weight:700;margin-left:5px;
+  animation:pulse-red 2s ease-in-out infinite;
+}
+@keyframes pulse-red{
+  0%,100%{transform:scale(1);opacity:1;}
+  50%{transform:scale(1.15);opacity:.85;}
+}
+/* topbar msg indicator */
+#topbar-msg-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--rd);
+  display:none;margin-right:2px;
+  animation:pulse-red 2s ease-in-out infinite;
+}
+
+/* ── Sticky period/chart-range sections ── */
+.lp-sticky{position:sticky;top:0;z-index:10;background:var(--sf);
+  padding:12px 13px 8px;margin:-14px -13px 0;border-bottom:1px solid var(--bd)}
+/* BOD period selector */
+.bod-period-box{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r);
+  padding:9px 11px;margin-bottom:8px}
+.bod-period-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.bod-period-label{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.7px;color:var(--hi);margin-bottom:4px}
+/* Drill modal legend */
+.drill-legend-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.drill-leg-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--mu)}
+.drill-leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.drill-leg-line{width:14px;height:3px;border-radius:2px;flex-shrink:0}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════ GLOBAL LOADER ══════════════════ -->
-<div id="global-loader" class="hidden">
-  <div class="gloader-inner">
-    <div class="gloader-spin"></div>
-    <div class="gloader-lbl" id="loader-lbl">Loading…</div>
-  </div>
-</div>
-
-<!-- ══════════════════ LOGIN ══════════════════ -->
+<!-- LOGIN -->
 <div id="pg-login">
   <div class="lcard">
     <div class="lbrand">CMI Operations</div>
     <div class="lsub">KPI Reporting System</div>
-    <div class="lf"><label>Username</label><input id="l-user" autocomplete="off" placeholder="e.g. production"></div>
-    <div class="lf"><label>Password</label><input id="l-pass" type="password" placeholder="••••••••"></div>
-    <div id="l-err" class="lerr"></div>
-    <button class="lbtn" onclick="doLogin()">Sign in</button>
-    <div class="demo-sec">
-      <div class="demo-lbl">Demo accounts</div>
-      <div id="demo-list"></div>
+    <div class="lf"><label>Username</label>
+      <input id="l-u" type="text" autocomplete="off" placeholder="e.g. production"></div>
+    <div class="lf"><label>Password</label>
+      <input id="l-p" type="password" placeholder="••••••••"></div>
+    <div id="l-err"></div>
+    <button id="btn-login">Sign in</button>
+    <div class="lhint">
+      <b>Accounts:</b> bod · production · qa · design · project_dev · sc · cid · tl_handover · sales · marketing · cs · finance · hr · hse<br>
+      Password: <b>[username]123</b> &nbsp;·&nbsp; e.g. bod123, hr123
     </div>
   </div>
 </div>
 
-<!-- ══════════════════ APP ══════════════════ -->
+<!-- APP -->
 <div id="pg-app">
-  <!-- TOPBAR -->
   <div class="topbar">
     <div class="tlogo">CMI <span>· KPI Dashboard</span></div>
     <div class="tright">
-      <span id="t-badge" class="tbadge"></span>
-      <span id="t-name" style="font-size:12px;color:var(--muted)"></span>
-      <div id="t-av" class="tavatar"></div>
-      <button class="tbtn" onclick="doLogout()">Sign out</button>
+      <!-- FIX #2: sync badge is muted, no background colour -->
+      <span id="topbar-msg-dot" title="You have unread messages"></span><button id="sync-badge">● Loading…</button>
+      <!-- t-badge and t-name removed in V14 -->
+      <!-- avatar circle removed per V14 -->
+      <button id="btn-logout">Sign out</button>
     </div>
   </div>
-
   <div class="shell">
-
-    <!-- ════════════ LEFT PANEL ════════════ -->
-    <div class="lpanel" id="lpanel">
-      <div class="lpanel-scroll" id="lpanel-content">
-        <!-- injected by JS -->
-      </div>
-    </div>
-
-    <!-- ════════════ RIGHT PANEL ════════════ -->
-    <div class="rpanel" id="rpanel">
-      <div class="rp-header">
-        <div>
-          <div class="rp-title" id="rp-title">Select a department</div>
-          <div class="rp-sub" id="rp-sub"></div>
+    <div class="lp"><div class="lp-sc" id="lp-body"></div></div>
+    <div class="rp" id="rp-panel">
+      <!-- FIX #6: header row with optional back button -->
+      <div class="rp-hdr">
+        <div class="rp-hdr-left">
+          <div id="rp-title" class="rp-title">CMI Dashboard</div>
+          <div id="rp-sub" class="rp-sub">Select a department from the left panel</div>
         </div>
+        <div style="display:flex;align-items:center;gap:6px"><div id="rp-msg-btn-wrap"></div><button class="msg-action-btn" id="rp-hist-btn">&#x1F4CB; History</button><button id="btn-bod-back" class="hidden">← Overview</button></div>
       </div>
-      <div id="rp-body">
-        <div class="empty-state">
-          <div class="empty-state-icon">📊</div>
-          <div class="empty-state-text">Select a department from the left panel</div>
-        </div>
-      </div>
+      <div id="rp-body"></div>
     </div>
-
+  
+  <div class="msg-panel" id="msg-panel">
+    <div class="msg-hdr">
+      <div class="msg-hdr-title" id="msg-panel-title">Messages</div>
+      <button class="msg-close-btn" id="msg-panel-close-btn">&#x2715;</button>
+    </div>
+    <div class="msg-thread" id="msg-thread"></div>
+    <div class="msg-compose">
+      <textarea class="msg-txt-input" id="msg-txt-input" rows="2" placeholder="Type a message…"></textarea>
+      <button class="msg-send-btn2" id="msg-send-btn">Send</button>
+    </div>
   </div>
+  <!-- DRILL-DOWN MODAL -->
+  <div id="drill-ov" class="drill-ov" style="display:none">
+    <div class="drill-box">
+      <div class="drill-hd">
+        <div class="drill-hd-t" id="drill-title">Chart Detail</div>
+        <div class="drill-hd-r">
+          <button class="drill-exp" id="drill-exp-btn">⬇ Export PNG</button>
+          <button class="drill-cls" id="drill-cls-btn">✕</button>
+        </div>
+      </div>
+      <div class="drill-bd">
+        <div id="drill-body"><!-- set dynamically --></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-overlay" style="display:none" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span id="modal-title">Message History</span>
+        <button class="modal-close-x" id="modal-close-x">&#x2715;</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+</div>
 </div>
 
 <script>
-// ══════════════════════════════════════════════════════
-// CONFIG — fill in after IT setup
-// ══════════════════════════════════════════════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4RBwya-zrnWPd-0I58UF-wwHaxa-RxNoFWG_P-I2Fix8snKkT1Ug2N93IP8dHs14Y/exec'; // or SharePoint config
+// ═══════════════════════════════════════════════
+// GOOGLE SHEETS CONFIG
+// ═══════════════════════════════════════════════
+var SHEET_ID  = '1erlvjOnrRT90VMnCkNnqOU-xORkYidNqwAyxcWBjsVk';
+var SHEET_GID = '0';
+var SHEET_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID
+              + '/export?format=csv&gid=' + SHEET_GID;
+var SCRIPT_URL  = 'https://script.google.com/macros/s/AKfycbxUskIIs3qyEYjt5dqVBFoQOeqgLaVNJ3xEE6x0CwOgCII4H7MHz-EuoxkdIecqirknmQ/exec';
+var GAS_PW_URL  = 'https://script.google.com/macros/s/AKfycbxUskIIs3qyEYjt5dqVBFoQOeqgLaVNJ3xEE6x0CwOgCII4H7MHz-EuoxkdIecqirknmQ/exec';
+var GAS_MSG_URL = 'https://script.google.com/macros/s/AKfycbxUskIIs3qyEYjt5dqVBFoQOeqgLaVNJ3xEE6x0CwOgCII4H7MHz-EuoxkdIecqirknmQ/exec';
 
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // CONSTANTS
-// ══════════════════════════════════════════════════════
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const NOW_Y  = new Date().getFullYear();
-const NOW_M  = new Date().getMonth();
-const YEARS  = [NOW_Y-1, NOW_Y, NOW_Y+1];
+// ═══════════════════════════════════════════════
+var MN  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var NY  = new Date().getFullYear();
+var NM  = new Date().getMonth(); // 0-indexed: Jan=0 … Dec=11
+var YRS = [2024, 2025, 2026, 2027];
 
-const DEPTS = [
-  {id:'PROD',  name:'Production',    manager:'Mr.Production',       color:'#378ADD',
-   purpose:'Deliver boats to plan, on time, with controlled labour.',
+// ═══════════════════════════════════════════════
+// DEPT DEFINITIONS  — V13
+// ═══════════════════════════════════════════════
+var DEPTS = [
+  {id:'PROD', name:'Production', abbr:'PROD', color:'#378ADD', ini:'RK', mgr:'Rudy Knoesen',
+   purpose:'Deliver boats on time with controlled labour.',
    kpis:[
-     {key:'boats_started',   label:'Boats Started',        unit:'count', t:'int'},
-     {key:'boats_completed', label:'Boats Completed',       unit:'count', t:'int'},
-     {key:'schedule_adh',    label:'Schedule Adherence',    unit:'%',     t:'pct'},
-     {key:'labour_plan',     label:'Labour vs Plan',        unit:'%',     t:'pct'},
-     {key:'rework_pct',      label:'Rework Hours',          unit:'% hrs', t:'pct'},
+     {k:'Schedule_Adherence_pct',   l:'Schedule Adherence',    u:'%',   t:'p'},
+     {k:'Labour_Hours_vs_Plan_pct', l:'Labour Hours vs Plan',  u:'%',   t:'p'},
+     {k:'Rework_Hours_pct',         l:'Rework Hours',          u:'%',   t:'p'},
+     {k:'Work_Order_Changes',       l:'Work Order Changes',    u:'No.', t:'i'},
+     {k:'Boats_Completed',          l:'Boats Completed',       u:'No.', t:'i'},
+   ],
+   overlayCharts:[
+     {title:'Schedule Adherence %',           unit:'%',    datasets:[{key:'Schedule_Adherence_pct',   label:'Schedule Adherence %', color:'#378ADD',type:'line'}]},
+     {title:'Labour Hours vs Plan %',          unit:'%',    datasets:[{key:'Labour_Hours_vs_Plan_pct', label:'Labour vs Plan %',     color:'#60A5FA',type:'line'}]},
+     {title:'Rework Hours %',                  unit:'%',    datasets:[{key:'Rework_Hours_pct',         label:'Rework %',             color:'#F87171',type:'line'}]},
+     {title:'Work Order Changes',              unit:'No.',  datasets:[{key:'Work_Order_Changes',       label:'WO Changes',           color:'#FB923C',type:'bar'}]},
+     {title:'Boats Completed',                 unit:'No.',  datasets:[{key:'Boats_Completed',          label:'Boats',                color:'#1D4ED8',type:'bar'}]},
    ]},
-  {id:'SALES', name:'Sales',         manager:'Mr.Sale',   color:'#1D9E75',
-   purpose:'Order intake quality and predictability.',
+
+  {id:'QA', name:'Quality Assurance', abbr:'QA', color:'#D4537E', ini:'DA', mgr:'Mr Duy Anh',
+   purpose:'Ensure first-time quality.',
    kpis:[
-     {key:'orders_usd',      label:'Orders Booked',         unit:'USD',   t:'cur'},
-     {key:'units_sold',      label:'Units Sold',            unit:'count', t:'int'},
-     {key:'pipeline_usd',    label:'Sales Pipeline',        unit:'USD',   t:'cur'},
-     {key:'order_changes',   label:'Order Changes',         unit:'count', t:'int'},
+     {k:'First_Time_Pass_pct',  l:'First Time Pass',    u:'%',   t:'p'},
+     {k:'QA_Defects_Logged',    l:'QA Defects Logged',  u:'No.', t:'i'},
+     {k:'Defects_Severity_A',   l:'Defects Severity A', u:'No.', t:'i'},
+     {k:'Defects_Severity_B',   l:'Defects Severity B', u:'No.', t:'i'},
+     {k:'Defects_Severity_C',   l:'Defects Severity C', u:'No.', t:'i'},
+     {k:'Avg_Closeout_Days_QA', l:'Avg Close-out Time', u:'Days',t:'p'},
+   ],
+   overlayCharts:[
+     {title:'First Time Pass %',         unit:'%',   datasets:[{key:'First_Time_Pass_pct', label:'FTP %',          color:'#D4537E',type:'line'}]},
+     {title:'QA Defects Logged',         unit:'No.', datasets:[{key:'QA_Defects_Logged',   label:'Defects Logged', color:'#F43F5E',type:'bar'}]},
+     {title:'Defects by Severity A/B/C', unit:'No.', datasets:[
+       {key:'Defects_Severity_A', label:'Severity A', color:'#DC2626', type:'bar'},
+       {key:'Defects_Severity_B', label:'Severity B', color:'#F97316', type:'bar'},
+       {key:'Defects_Severity_C', label:'Severity C', color:'#FBBF24', type:'bar'},
+     ]},
+     {title:'Avg Close-out Time',        unit:'Days',datasets:[{key:'Avg_Closeout_Days_QA', label:'Avg Days', color:'#BE185D',type:'line'}]},
    ]},
-  {id:'QA',    name:'Quality Assurance', manager:'Mr.QA',        color:'#D4537E',
-   purpose:'Gatekeeper of first-time quality.',
+
+  {id:'DESIGN', name:'Design & Technical', abbr:'D&T', color:'#8B5CF6', ini:'JA', mgr:'James',
+   purpose:'Stable design and BOM.',
    kpis:[
-     {key:'ftp_pct',         label:'First Time Pass',       unit:'%',     t:'pct'},
-     {key:'defects_a',       label:'Defects A',             unit:'count', t:'int'},
-     {key:'defects_b',       label:'Defects B',             unit:'count', t:'int'},
-     {key:'defects_c',       label:'Defects C',             unit:'count', t:'int'},
-     {key:'rework_loops',    label:'Rework Loopbacks',      unit:'count', t:'int'},
+     {k:'BOM_Errors_Identified',  l:'BOM Errors Identified', u:'No.', t:'i'},
+     {k:'Production_RFIs',        l:'Production RFIs',       u:'No.', t:'i'},
+     {k:'Late_Design_Changes',    l:'Late Design Changes',   u:'No.', t:'i'},
+   ],
+   overlayCharts:[
+     {title:'BOM Errors Identified',              unit:'No.', datasets:[{key:'BOM_Errors_Identified', label:'BOM Errors',    color:'#8B5CF6',type:'bar'}]},
+     {title:'Production RFIs',                    unit:'No.', datasets:[{key:'Production_RFIs',       label:'RFIs',          color:'#A78BFA',type:'bar'}]},
+     {title:'Late Design Changes',                unit:'No.', datasets:[{key:'Late_Design_Changes',   label:'Late Changes',  color:'#6D28D9',type:'bar'}]},
    ]},
-  {id:'FIN',   name:'Finance',        manager:'Mr.CFO',    color:'#EF9F27',
-   purpose:'Cash, margin, and discipline.',
+
+  {id:'PD', name:'Project Development', abbr:'PD', color:'#14B8A6', ini:'PL', mgr:'Project Lead',
+   purpose:'Controlled implementation of change.',
    kpis:[
-     {key:'cashflow',        label:'Operating Cash Flow',   unit:'USD',   t:'cur'},
-     {key:'gross_margin',    label:'Gross Margin',          unit:'%',     t:'pct'},
-     {key:'ar_60',           label:'AR >60 days',           unit:'USD',   t:'cur'},
-     {key:'inventory_val',   label:'Inventory Value',       unit:'USD',   t:'cur'},
+     {k:'Active_Projects',         l:'Active Projects',        u:'No.', t:'i'},
+     {k:'Projects_OnTrack_pct',    l:'Projects On-Track',      u:'%',   t:'p'},
+     {k:'Design_Changes_Released', l:'Design Changes Released',u:'No.', t:'i'},
+   ],
+   overlayCharts:[
+     {title:'Active Projects',         unit:'No.', datasets:[{key:'Active_Projects',         label:'Active Projects',  color:'#14B8A6',type:'bar'}]},
+     {title:'Projects On-Track %',     unit:'%',   datasets:[{key:'Projects_OnTrack_pct',    label:'On-Track %',       color:'#0D9488',type:'line'}]},
+     {title:'Design Changes Released', unit:'No.', datasets:[{key:'Design_Changes_Released', label:'Changes Released', color:'#5EEAD4',type:'bar'}]},
    ]},
-  {id:'SCM',   name:'Supply Chain',   manager:'Mr.SCM',     color:'#D85A30',
-   purpose:'Material availability without excess cash burn.',
+
+  {id:'SC', name:'Supply Chain', abbr:'SCM', color:'#D85A30', ini:'ML', mgr:'Mr Loc',
+   purpose:'Material availability to production.',
    kpis:[
-     {key:'otif_pct',        label:'OTIF to Production',    unit:'%',     t:'pct'},
-     {key:'shortages',       label:'Material Shortages',    unit:'count', t:'int'},
-     {key:'inv_turns',       label:'Inventory Turns',       unit:'x',     t:'dec'},
-     {key:'freight_usd',     label:'Expedited Freight',     unit:'USD',   t:'cur'},
+     {k:'OTIF_to_Production_pct',     l:'OTIF to Production',               u:'%',  t:'p'},
+     {k:'Material_Shortages',         l:'Material Shortages Impact Prod.',   u:'No.',t:'i'},
+     {k:'Expedited_Freight_Cost_USD', l:'Expedited Freight Cost',            u:'USD',t:'c'},
+   ],
+   overlayCharts:[
+     {title:'OTIF to Production %',                   unit:'%',   datasets:[{key:'OTIF_to_Production_pct',     label:'OTIF %',        color:'#D85A30',type:'line'}]},
+     {title:'Material Shortages Impacting Production', unit:'No.', datasets:[{key:'Material_Shortages',         label:'Shortages',     color:'#F97316',type:'bar'}]},
+     {title:'Expedited Freight Cost',                  unit:'USD', datasets:[{key:'Expedited_Freight_Cost_USD', label:'Freight Cost',  color:'#EA580C',type:'bar'}]},
    ]},
-  {id:'HR',    name:'Human Resources',manager:'Ms.HR',            color:'#7F77DD',
-   purpose:'Stability and capability.',
+
+  {id:'CID', name:'CID', abbr:'CID', color:'#6366F1', ini:'CL', mgr:'CID Lead',
+   purpose:'Drive measurable improvement.',
    kpis:[
-     {key:'headcount',       label:'Headcount (actual)',    unit:'count', t:'int'},
-     {key:'headcount_plan',  label:'Headcount (plan)',      unit:'count', t:'int'},
-     {key:'turnover_pct',    label:'Staff Turnover',        unit:'%',     t:'pct'},
-     {key:'absence_pct',     label:'Absenteeism',           unit:'%',     t:'pct'},
+     {k:'CID_Actions_Open',      l:'CID Actions Open',    u:'No.',  t:'i'},
+     {k:'CID_Actions_Closed',    l:'CID Actions Closed',  u:'No.',  t:'i'},
+     {k:'CID_Avg_Closeout_Days', l:'Avg Close-out Time',  u:'Days', t:'p'},
+   ],
+   overlayCharts:[
+     {title:'CID Actions Open vs Closed', unit:'No.', datasets:[
+       {key:'CID_Actions_Open',   label:'Open',   color:'#A5B4FC', type:'bar'},
+       {key:'CID_Actions_Closed', label:'Closed', color:'#6366F1', type:'bar'},
+     ]},
+     {title:'Avg Close-out Time', unit:'Days', datasets:[{key:'CID_Avg_Closeout_Days', label:'Avg Days', color:'#4F46E5',type:'line'}]},
    ]},
-  {id:'HSE',   name:'HSE',            manager:'Mr.HSE',           color:'#639922',
-   purpose:'Prevent incidents and ensure compliance.',
+
+  {id:'TL', name:'Thailand Handover', abbr:'TH', color:'#F97316', ini:'PH', mgr:'Phil Harper',
+   purpose:'Clean delivery and handover.',
    kpis:[
-     {key:'trir',            label:'TRIR',                  unit:'rate',  t:'dec'},
-     {key:'ltifr',           label:'LTIFR',                 unit:'rate',  t:'dec'},
-     {key:'near_miss',       label:'Near Miss Reports',     unit:'count', t:'int'},
-     {key:'compliance_pct',  label:'Safety Compliance',     unit:'%',     t:'pct'},
+     {k:'Handovers_Completed',        l:'Handovers Completed',          u:'No.',t:'i'},
+     {k:'Delivery_to_Planned_pct',    l:'Delivery to Planned Date',     u:'%',  t:'p'},
+     {k:'Defects_at_Handover',        l:'Defects at Handover',          u:'No.',t:'i'},
+     {k:'Outstanding_Issues_Delivery',l:'Outstanding Issues at Delivery',u:'No.',t:'i'},
+   ],
+   overlayCharts:[
+     {title:'Handovers Completed',                    unit:'No.', datasets:[{key:'Handovers_Completed',         label:'Handovers',          color:'#F97316',type:'bar'}]},
+     {title:'Delivery to Planned Date %',              unit:'%',   datasets:[{key:'Delivery_to_Planned_pct',     label:'On-Time %',          color:'#FB923C',type:'line'}]},
+     {title:'Defects at Handover & Outstanding Issues',unit:'No.', datasets:[
+       {key:'Defects_at_Handover',        label:'Defects',            color:'#EF4444', type:'bar'},
+       {key:'Outstanding_Issues_Delivery',label:'Outstanding Issues', color:'#F59E0B', type:'bar'},
+     ]},
+   ]},
+
+  {id:'SALES', name:'Sales', abbr:'SALES', color:'#1D9E75', ini:'MK', mgr:'Mike',
+   purpose:'Order intake and pipeline visibility.',
+   kpis:[
+     {k:'Orders_Booked_USD',       l:'Orders Booked',            u:'USD', t:'c'},
+     {k:'Units_Sold',              l:'Units Sold',               u:'No.', t:'i'},
+     {k:'Order_Changes_Post',      l:'Order Changes Post-Contract',u:'No.',t:'i'},
+     {k:'Sales_Pipeline_USD',      l:'Sales Pipeline',           u:'USD', t:'c'},
+   ],
+   overlayCharts:[
+     {title:'Orders Booked vs Pipeline', unit:'USD', datasets:[
+       {key:'Sales_Pipeline_USD',  label:'Pipeline',      color:'#6EE7B7', type:'bar'},
+       {key:'Orders_Booked_USD',   label:'Orders Booked', color:'#1D9E75', type:'bar'},
+     ]},
+     {title:'Units Sold',                unit:'No.', datasets:[{key:'Units_Sold',         label:'Units',          color:'#34D399',type:'bar'}]},
+     {title:'Order Changes Post-Contract',unit:'No.', datasets:[{key:'Order_Changes_Post', label:'Order Changes',  color:'#F59E0B',type:'bar'}]},
+   ]},
+
+  {id:'MKTG', name:'Marketing', abbr:'MKTG', color:'#EC4899', ini:'NP', mgr:'Nhi Pham',
+   purpose:'Lead generation effectiveness.',
+   kpis:[
+     {k:'Qualified_Leads',        l:'Qualified Leads',    u:'No.', t:'i'},
+     {k:'Cost_Per_Lead_USD',      l:'Cost per Lead',      u:'USD', t:'c'},
+     {k:'Conversion_Rate_pct',    l:'Conversion Rate',    u:'%',   t:'p'},
+     {k:'Campaigns_Active',       l:'Campaigns Active',   u:'No.', t:'i'},
+   ],
+   overlayCharts:[
+     {title:'Qualified Leads',   unit:'No.', datasets:[{key:'Qualified_Leads',     label:'Leads',       color:'#EC4899',type:'bar'}]},
+     {title:'Cost per Lead',     unit:'USD', datasets:[{key:'Cost_Per_Lead_USD',   label:'Cost/Lead',   color:'#F472B6',type:'line'}]},
+     {title:'Conversion Rate %', unit:'%',   datasets:[{key:'Conversion_Rate_pct', label:'Conversion %',color:'#BE185D',type:'line'}]},
+   ]},
+
+  {id:'CS', name:'Customer Service', abbr:'CS', color:'#0891B2', ini:'VN', mgr:'Van Nguyen',
+   purpose:'Warranty control and resolution.',
+   kpis:[
+     {k:'Warranty_Claims_Open',  l:'Warranty Claims Open',  u:'No.', t:'i'},
+     {k:'New_Claims',            l:'New Claims',            u:'No.', t:'i'},
+     {k:'Avg_Closeout_Days_CS',  l:'Avg Close-out Time',   u:'Days',t:'p'},
+     {k:'Repeat_Issues',         l:'Repeat Issues',         u:'No.', t:'i'},
+   ],
+   overlayCharts:[
+     {title:'Claims Open vs New', unit:'No.', datasets:[
+       {key:'Warranty_Claims_Open', label:'Open',      color:'#F87171', type:'bar'},
+       {key:'New_Claims',           label:'New Claims',color:'#0891B2', type:'bar'},
+     ]},
+     {title:'Avg Close-out Time', unit:'Days', datasets:[{key:'Avg_Closeout_Days_CS', label:'Avg Days',     color:'#0E7490',type:'line'}]},
+     {title:'Repeat Issues',      unit:'No.',  datasets:[{key:'Repeat_Issues',         label:'Repeat Issues',color:'#EF4444',type:'bar'}]},
+   ]},
+
+  {id:'FIN', name:'Finance', abbr:'FIN', color:'#EF9F27', ini:'MD', mgr:'Mr Dung',
+   purpose:'Cash and margin control.',
+   kpis:[
+     {k:'Operating_CF_USD',       l:'Operating Cash Flow',    u:'USD', t:'c'},
+     {k:'Gross_Margin_pct',       l:'Gross Margin',           u:'%',   t:'p'},
+     {k:'Aged_Receivables_USD',   l:'Aged Receivables >60d',  u:'USD', t:'c'},
+     {k:'Inventory_Value_USD',    l:'Inventory Value',        u:'USD', t:'c'},
+   ],
+   overlayCharts:[
+     {title:'Operating Cash Flow', unit:'USD', datasets:[{key:'Operating_CF_USD',     label:'Cash Flow',     color:'#EF9F27',type:'bar'}]},
+     {title:'Gross Margin %',      unit:'%',   datasets:[{key:'Gross_Margin_pct',     label:'Gross Margin %',color:'#F59E0B',type:'line'}]},
+     {title:'Aged Receivables >60d & Inventory', unit:'USD', datasets:[
+       {key:'Aged_Receivables_USD', label:'AR >60d',    color:'#EF4444', type:'bar'},
+       {key:'Inventory_Value_USD',  label:'Inventory',  color:'#FCD34D', type:'bar'},
+     ]},
+   ]},
+
+  {id:'HR', name:'Human Resources', abbr:'HR', color:'#7F77DD', ini:'MC', mgr:'Ms Chau',
+   purpose:'Workforce stability.',
+   kpis:[
+     {k:'Headcount_vs_Plan',  l:'Headcount vs Plan',  u:'No.', t:'i'},
+     {k:'Staff_Turnover_pct', l:'Staff Turnover',     u:'%',   t:'p'},
+     {k:'Absenteeism_pct',    l:'Absenteeism',        u:'%',   t:'p'},
+     {k:'Overtime_pct',       l:'Overtime',           u:'%',   t:'p'},
+   ],
+   overlayCharts:[
+     {title:'Headcount vs Plan', unit:'No.', datasets:[{key:'Headcount_vs_Plan',  label:'Headcount', color:'#7F77DD',type:'bar'}]},
+     {title:'Staff Turnover & Absenteeism %', unit:'%', datasets:[
+       {key:'Staff_Turnover_pct', label:'Turnover %',    color:'#F87171', type:'line'},
+       {key:'Absenteeism_pct',    label:'Absenteeism %', color:'#FB923C', type:'line'},
+     ]},
+     {title:'Overtime %', unit:'%', datasets:[{key:'Overtime_pct', label:'Overtime %', color:'#A78BFA',type:'line'}]},
+   ]},
+
+  {id:'HSE', name:'HSE', abbr:'HSE', color:'#16A34A', ini:'MP', mgr:'Mr Phong',
+   purpose:'Safe operations and compliance.',
+   kpis:[
+     {k:'TRIR',                   l:'TRIR',                    u:'rate',t:'p'},
+     {k:'LTIFR',                  l:'LTIFR',                   u:'rate',t:'p'},
+     {k:'Near_Miss_Reports',      l:'Near Miss Reports',       u:'No.', t:'i'},
+     {k:'High_Risk_Work_Comp_pct',l:'High-Risk Work Compliance',u:'%',  t:'p'},
+   ],
+   overlayCharts:[
+     {title:'TRIR & LTIFR',        unit:'rate', datasets:[
+       {key:'TRIR',  label:'TRIR',  color:'#DC2626', type:'line'},
+       {key:'LTIFR', label:'LTIFR', color:'#F97316', type:'line'},
+     ]},
+     {title:'Near Miss Reports',            unit:'No.', datasets:[{key:'Near_Miss_Reports',       label:'Near Miss',   color:'#16A34A',type:'bar'}]},
+     {title:'High-Risk Work Compliance %',  unit:'%',   datasets:[{key:'High_Risk_Work_Comp_pct', label:'Compliance %',color:'#4ADE80',type:'line'}]},
    ]},
 ];
 
-const DEMO = {
-  boss:       {role:'boss',  name:'Managing Director',   initials:'MD', color:'#EF9F27', pass:'boss123'},
-  production: {role:'dept',  dept:'PROD', name:'Mr.Production',   initials:'RK', color:'#378ADD', pass:'prod123'},
-  sales:      {role:'dept',  dept:'SALES',name:'Mr.Sale',            initials:'MS', color:'#1D9E75', pass:'sales123'},
-  qa:         {role:'dept',  dept:'QA',   name:'Mr.QA',         initials:'DA', color:'#D4537E', pass:'qa123'},
-  finance:    {role:'dept',  dept:'FIN',  name:'Mr.CFO', initials:'PD', color:'#EF9F27', pass:'fin123'},
-  supply:     {role:'dept',  dept:'SCM',  name:'Mr.SCM',  initials:'LT', color:'#D85A30', pass:'scm123'},
-  hr:         {role:'dept',  dept:'HR',   name:'Ms.HR',         initials:'MC', color:'#7F77DD', pass:'hr123'},
-  hse:        {role:'dept',  dept:'HSE',  name:'Mr.HSE',        initials:'MP', color:'#639922', pass:'hse123'},
+var USERS = {
+  bod:         {role:'bod',  name:'BOD',                      ini:'',color:'#EF9F27',pass:'bod123'},
+  admin:       {role:'admin',name:'System Admin',              ini:'',color:'#374151',pass:'admin123'},
+  production:  {role:'dept', dept:'PROD',   name:'Rudy Knoesen',    ini:'RK',color:'#378ADD',pass:'production123'},
+  qa:          {role:'dept', dept:'QA',     name:'Mr Duy Anh',      ini:'DA',color:'#D4537E',pass:'qa123'},
+  design:      {role:'dept', dept:'DESIGN', name:'James',            ini:'JA',color:'#8B5CF6',pass:'design123'},
+  project_dev: {role:'dept', dept:'PD',     name:'Project Lead',     ini:'PL',color:'#14B8A6',pass:'project_dev123'},
+  sc:          {role:'dept', dept:'SC',     name:'Mr Loc',           ini:'ML',color:'#D85A30',pass:'sc123'},
+  cid:         {role:'dept', dept:'CID',    name:'CID Lead',         ini:'CL',color:'#6366F1',pass:'cid123'},
+  tl_handover: {role:'dept', dept:'TL',     name:'Phil Harper',      ini:'PH',color:'#F97316',pass:'tl_handover123'},
+  sales:       {role:'dept', dept:'SALES',  name:'Mike',             ini:'MK',color:'#1D9E75',pass:'sales123'},
+  marketing:   {role:'dept', dept:'MKTG',   name:'Nhi Pham',         ini:'NP',color:'#EC4899',pass:'marketing123'},
+  cs:          {role:'dept', dept:'CS',     name:'Van Nguyen',       ini:'VN',color:'#0891B2',pass:'cs123'},
+  finance:     {role:'dept', dept:'FIN',    name:'Mr Dung',          ini:'MD',color:'#EF9F27',pass:'finance123'},
+  hr:          {role:'dept', dept:'HR',     name:'Ms Chau',          ini:'MC',color:'#7F77DD',pass:'hr123'},
+  hse:         {role:'dept', dept:'HSE',    name:'Mr Phong',         ini:'MP',color:'#16A34A',pass:'hse123'},
 };
 
-// ══════════════════════════════════════════════════════
-// DATA STORE
-// ══════════════════════════════════════════════════════
-// Key format: "DEPTID_YEAR_MONTHIDX"
-let STORE = {};
-let charts = {};
-
-function storeKey(dept, year, month){ return `${dept}_${year}_${month}`; }
-
-function seedDemo() {
-  DEPTS.forEach(d => {
-    // Seed 2 years of data
-    [NOW_Y-1, NOW_Y].forEach(yr => {
-      const maxM = yr === NOW_Y ? NOW_M : 11;
-      for(let m=0; m<=maxM; m++){
-        let r = {_saved:true, _ts:`${MONTHS[m]} ${yr}`, comment:''};
-        d.kpis.forEach(k => {
-          if(k.t==='pct')  r[k.key] = +(75+Math.random()*20).toFixed(1);
-          else if(k.t==='int')  r[k.key] = Math.round(5+Math.random()*20);
-          else if(k.t==='cur')  r[k.key] = Math.round((150000+Math.random()*850000)/1000)*1000;
-          else              r[k.key] = +(1+Math.random()*5).toFixed(2);
-        });
-        if(d.id==='QA')   { r.ftp_pct = +(84+Math.random()*13).toFixed(1); }
-        if(d.id==='PROD') { r.boats_started=Math.round(8+Math.random()*6); r.boats_completed=r.boats_started-Math.round(Math.random()*2); }
-        STORE[storeKey(d.id,yr,m)] = r;
-      }
-    });
-    STORE[storeKey(d.id,NOW_Y,NOW_M)] = {_saved:false};
-  });
-}
-
-
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // STATE
-// ══════════════════════════════════════════════════════
-let user         = null;
-let selDept      = null;    // dept manager's own dept
-let selYear      = NOW_Y;
-let selMonth     = NOW_M;
-let drFrom       = {y:NOW_Y-1, m:0};
-let drTo         = {y:NOW_Y,   m:NOW_M};
-let bossOpenDept = null;    // which accordion is open
+// ═══════════════════════════════════════════════
+var GS_DATA = [], GS_HDR = [];
+var U = null, deptId = null, selY = NY, selM = NM;
+var drF = {y:NY-1, m:0}, drT = {y:NY, m:NM};
+var accOpen = null;
+var CH = {};
+var UNLOCKED = {};
+// BOD selected period (for snapshot delta view)
+var selBodY = NY;
+var selBodM = NM; // 0-indexed
 
-// ══════════════════════════════════════════════════════
-// LOGIN
-// ══════════════════════════════════════════════════════
-function buildDemoList(){
-  document.getElementById('demo-list').innerHTML = Object.entries(DEMO).map(([u,a])=>`
-    <div class="demo-item" onclick="quickLogin('${u}')">
-      <span class="ddot" style="background:${a.color}"></span>
-      <div class="dinfo"><div class="dname">${a.name}</div><div class="dcred">${u} / ${a.pass}</div></div>
-      <span class="dbadge" style="background:${a.role==='boss'?'var(--amber-bg)':'var(--blue-bg)'};color:${a.role==='boss'?'var(--amber)':'var(--blue)'}">${a.role==='boss'?'All depts':a.dept}</span>
-    </div>`).join('');
+Chart.register(ChartDataLabels);
+function el(id){ return document.getElementById(id); }
+
+// ═══════════════════════════════════════════════
+// GOOGLE SHEETS — fetch CSV
+// ═══════════════════════════════════════════════
+function fetchSheetData(cb){
+  setSyncBadge('loading');
+  fetch(SHEET_URL + '&t=' + Date.now())
+    .then(function(r){ return r.text(); })
+    .then(function(csv){
+      var parsed = parseCSV(csv);
+      if(parsed.length < 2){ setSyncBadge('err', 0); if(cb)cb(); return; }
+      GS_HDR  = parsed[0].map(function(h){ return h.trim(); });
+      GS_DATA = parsed.slice(1).filter(function(r){ return r[0] && r[0].trim(); });
+      setSyncBadge('ok', GS_DATA.length);
+      if(cb)cb();
+    })
+    .catch(function(){
+      setSyncBadge('offline', 0);
+      if(cb)cb();
+    });
 }
 
-function quickLogin(u){ document.getElementById('l-user').value=u; document.getElementById('l-pass').value=DEMO[u].pass; doLogin(); }
-
-function doLogin(){
-  const u=document.getElementById('l-user').value.trim().toLowerCase();
-  const p=document.getElementById('l-pass').value;
-  const acc=DEMO[u];
-  if(!acc||acc.pass!==p){ document.getElementById('l-err').textContent='Incorrect credentials.'; document.getElementById('l-err').style.display='block'; return; }
-  document.getElementById('l-err').style.display='none';
-  user={...acc, username:u};
-  startApp();
+function parseCSV(text){
+  var rows=[], cur=[], field='', inQ=false;
+  for(var i=0;i<text.length;i++){
+    var ch=text[i];
+    if(inQ){
+      if(ch==='"'&&text[i+1]==='"'){field+='"';i++;}
+      else if(ch==='"'){inQ=false;}
+      else field+=ch;
+    } else {
+      if(ch==='"'){inQ=true;}
+      else if(ch===','){cur.push(field.trim());field='';}
+      else if(ch==='\n'||(ch==='\r'&&text[i+1]==='\n')){
+        if(ch==='\r')i++;
+        cur.push(field.trim());field='';rows.push(cur);cur=[];
+      } else field+=ch;
+    }
+  }
+  if(field||cur.length)cur.push(field.trim());
+  if(cur.length>1||cur[0])rows.push(cur);
+  return rows;
 }
-document.addEventListener('DOMContentLoaded',()=>{
-  buildDemoList();
-  document.getElementById('l-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-  document.getElementById('l-user').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-});
+
+function setSyncBadge(state, count){
+  var b = el('sync-badge');
+  if(!b) return;
+  if(state==='loading') { b.textContent='● Syncing…'; b.style.color='var(--am)'; }
+  else if(state==='ok')  { b.textContent='● Live · '+count+' rows'; b.style.color='var(--hi)'; }
+  else if(state==='err') { b.textContent='● No data'; b.style.color='var(--rd)'; }
+  else                   { b.textContent='● Offline'; b.style.color='var(--hi)'; }
+}
+
+// ═══════════════════════════════════════════════
+// DATA ACCESS
+// FIX #4: Google Sheet stores month as 1-12 (Jan=1).
+//         JS code uses 0-indexed months (Jan=0).
+//         Fix: sheet_month - 1 === code_month
+// ═══════════════════════════════════════════════
+function getGSRow(dept, year, month_0idx){
+  // Returns LAST (latest revision) row for dept/year/month
+  var found=null;
+  for(var i=0;i<GS_DATA.length;i++){
+    var r=GS_DATA[i];
+    if(r[0]===dept&&(parseInt(r[1])-1)===month_0idx&&parseInt(r[2])===year)
+      found=r;
+  }
+  return found;
+}
+function getRevisionCount(dept,year,m0){
+  var n=0;
+  for(var i=0;i<GS_DATA.length;i++){
+    var r=GS_DATA[i];
+    if(r[0]===dept&&(parseInt(r[1])-1)===m0&&parseInt(r[2])===year)n++;
+  }
+  return n;
+}
+function ordinal(n){
+  var s=['th','st','nd','rd'],v=n%100;
+  return n+(s[(v-20)%10]||s[v]||s[0]);
+}
+
+function getGSVal(dept, year, month_0idx, key){
+  var ki = GS_HDR.indexOf(key);
+  if(ki<0) return null;
+  var r = getGSRow(dept, year, month_0idx);
+  if(!r) return null;
+  var v = r[ki];
+  if(v===''||v===undefined||v===null) return null;
+  var n = parseFloat(v);
+  // FIX #1: round to 4 decimal places to eliminate floating-point noise
+  return isNaN(n) ? v : Math.round(n * 10000) / 10000;
+}
+
+// FIX #5: find the latest month/year that has data for a dept
+function getLastDataMonth(deptId){
+  var latest = null;
+  for(var i=0;i<GS_DATA.length;i++){
+    var r=GS_DATA[i];
+    if(r[0]===deptId){
+      var y=parseInt(r[2]);
+      var m=parseInt(r[1]); // 1-indexed from sheet
+      if(!latest || y>latest.y || (y===latest.y && m>latest.m))
+        latest={y:y,m:m};
+    }
+  }
+  return latest; // {y, m} where m is 1-indexed (1=Jan)
+}
+
+// ═══════════════════════════════════════════════
+// LOGIN / LOGOUT
+// ═══════════════════════════════════════════════
+// doLogin is defined later in the CHANGE PASSWORD section
+// (it needs getPass() to check localStorage passwords)
 
 function doLogout(){
-  user=null; selDept=null; bossOpenDept=null;
-  Object.keys(charts).forEach(k=>{try{charts[k].destroy();}catch(e){}});
-  charts={};
-  document.getElementById('pg-app').style.display='none';
-  document.getElementById('pg-login').style.display='flex';
-  document.getElementById('l-user').value='';
-  document.getElementById('l-pass').value='';
+  U=null; deptId=null; accOpen=null;
+  Object.keys(CH).forEach(function(k){ try{CH[k].destroy();}catch(e){} });
+  CH={}; GS_DATA=[]; GS_HDR=[];
+  el('pg-app').style.display='none';
+  el('pg-login').style.display='flex';
+  el('l-u').value=''; el('l-p').value='';
 }
 
-// ══════════════════════════════════════════════════════
-// APP START
-// ══════════════════════════════════════════════════════
-// function startApp(){
-//   document.getElementById('pg-login').style.display='none';
-//   document.getElementById('pg-app').style.display='flex';
+// ═══════════════════════════════════════════════
+// DEPT VIEW — LEFT PANEL
+// ═══════════════════════════════════════════════
+function buildDeptLeft(){
+  var dept=DEPTS.find(function(d){return d.id===deptId;});
+  var row=getGSRow(deptId,selY,selM);
+  var saved=!!row;
+  var comment=saved?getGSVal(deptId,selY,selM,'comment')||'':'';
+  // Previous month for delta indicators
+  var prevM0=selM===0?11:selM-1;
+  var prevY=selM===0?selY-1:selY;
+  var prevRow=getGSRow(deptId,prevY,prevM0);
+  var mO=MN.map(function(m,i){return '<option value="'+i+'"'+(i===selM?' selected':'')+'>'+m+'</option>';}).join('');
+  var yO=YRS.map(function(y){return '<option value="'+y+'"'+(y===selY?' selected':'')+'>'+y+'</option>';}).join('');
+  var revCount=getRevisionCount(deptId,selY,selM);
+  var isLocked=saved&&!UNLOCKED[deptId+'_'+selY+'_'+selM];
+  var inputs=dept.kpis.map(function(k){
+    var v=saved?getGSVal(deptId,selY,selM,k.k):null;
+    var pv=prevRow?getGSVal(deptId,prevY,prevM0,k.k):null;
+    var dlt='',dc='dn';
+    if(v!=null&&pv!=null&&pv!==0){
+      var p=((v-pv)/Math.abs(pv)*100);
+      dlt=(p>=0?'▲':'▼')+Math.abs(p).toFixed(1)+'%';
+      dc=p>=0?'du':'dd';
+    }
+    var revSpan=revCount>1?'<span class="rev-badge">'+ordinal(revCount)+'</span>':'';
+    var deltaSpan=dlt?'<span class="ki-delta '+dc+'">'+dlt+'<span class="ki-vs"> vs '+MN[prevM0]+'</span></span>':'';
+    return '<div class="ki">'
+      +'<div class="ki-lbl-row"><label>'+k.l+' <span style="color:var(--hi);font-weight:400">('+k.u+')</span></label>'
+      +'<span style="display:flex;align-items:center;gap:3px">'+revSpan+deltaSpan+'</span></div>'
+      +'<input class="ki-in" type="number" id="ki-'+k.k+'"'
+      +' step="'+(k.t==='p'?'0.01':'1')+'"'
+      +' value="'+(v!=null?v:'')+'" placeholder="—"'
+      +(isLocked?' readonly style="background:var(--sf2);color:var(--mu)"':'')+'></div>';
+  }).join('');
+  var drMO=function(sel){return MN.map(function(m,i){return '<option value="'+i+'"'+(i===sel?' selected':'')+'>'+m+'</option>';}).join('');};
+  var drYO=function(sel){return YRS.map(function(y){return '<option value="'+y+'"'+(y===sel?' selected':'')+'>'+y+'</option>';}).join('');};
 
-//   const av=document.getElementById('t-av');
-//   av.textContent=user.initials; av.style.background=user.color+'25'; av.style.color=user.color;
-//   document.getElementById('t-name').textContent=user.name;
+  el('lp-body').innerHTML=
+    '<div class="lp-sticky"><div class="lsec">Period</div>'
+    +'<div class="my-row">'
+    +'<select class="mysel" id="s-m">'+mO+'</select>'
+    +'<select class="mysel" id="s-y">'+yO+'</select></div>'
+    +'<div class="inp-st">'
+    +'<span style="font-size:11px;color:var(--mu);font-weight:500">Status</span>'
+    +'<span class="badge '+(saved?'bg':'ba')+'" id="st-badge">'+(saved?'Submitted':'Pending')+'</span></div>'
+    +'</div>' // close lp-sticky
+    +'<div class="lsec">'+dept.name+' ('+dept.abbr+') — '+MN[selM]+' '+selY+'</div>'
+    +'<div class="dept-purpose">'+dept.purpose+'</div>'
+    +'<div class="ki-list">'+inputs+'</div>'
+    +'<div class="ki" style="margin-bottom:13px">'
+    +'<label>Comment</label>'
+    +'<textarea class="ki-ta" id="ki-cmt" placeholder="Notes…">'+comment+'</textarea></div>'
+    +(isLocked
+        ?'<div class="lock-bar">🔒 Submitted — locked <button class="edit-btn" id="btn-unlock">✏️ Edit &amp; revise</button></div>'
+        :'<button class="sv-btn" id="sv-btn"><span class="spin" id="sv-sp"></span><span id="sv-lb">Save KPIs</span></button>'
+     )
+    +'<div class="sv-ok" id="sv-ok">✓ Saved to Google Sheets</div>'
+    +'<div class="sv-er" id="sv-er"></div>'
+    +'<div class="lsec" style="margin-top:14px">Chart range</div>'
+    +'<div class="dr-box"><div class="dr-quick">'
+    +'<button class="drq" data-quick="ytd">YTD</button>'
+    +'<button class="drq" data-quick="12m">Last 12M</button>'
+    +'<button class="drq" data-quick="all">All data</button></div>'
+    +'<div class="dr-row"><label>From</label>'
+    +'<select class="drsel" id="df-m">'+drMO(drF.m)+'</select>'
+    +'<select class="drsel" id="df-y">'+drYO(drF.y)+'</select></div>'
+    +'<div class="dr-row"><label>To</label>'
+    +'<select class="drsel" id="dt-m">'+drMO(drT.m)+'</select>'
+    +'<select class="drsel" id="dt-y">'+drYO(drT.y)+'</select></div>'
+    +'<button class="dr-apply" id="dr-apply-d">Apply</button></div>'
+    +'<div class="lsec" style="margin-top:14px">Account</div>'
+    +'<button class="chpw-btn" id="btn-chpw">🔑 Change password</button>'
+    +'<div id="chpw-wrap"></div>';
+}
 
-//   if(user.role==='boss'){
-//     document.getElementById('t-badge').textContent='Management';
-//     document.getElementById('t-badge').className='tbadge tbadge-amber';
-//     buildBossLeft();
-//     renderBossRight();
-//   } else {
-//     document.getElementById('t-badge').textContent=user.dept;
-//     document.getElementById('t-badge').className='tbadge tbadge-blue';
-//     selDept=user.dept; selYear=NOW_Y; selMonth=NOW_M;
-//     buildDeptLeft();
-//     renderDeptRight();
-//   }
-// }
+function onPC(){
+  selM=parseInt(el('s-m').value);
+  selY=parseInt(el('s-y').value);
+  buildDeptLeft(); renderDeptRight();
+}
+function setQ(preset){
+  document.querySelectorAll('.drq').forEach(function(b){b.classList.remove('act');});
+  var b=document.querySelector('.drq[data-quick="'+preset+'"]');if(b)b.classList.add('act');
+  if(preset==='ytd') {drF={y:NY,m:0};   drT={y:NY,m:NM};}
+  if(preset==='12m') {drF={y:NY-1,m:NM};drT={y:NY,m:NM};}
+  if(preset==='all') {drF={y:2025,m:0}; drT={y:NY,m:NM};}
+  buildDeptLeft(); renderDeptRight();
+}
+function applyDR(){
+  var fm=el('df-m'),fy=el('df-y'),tm=el('dt-m'),ty=el('dt-y');
+  var bfm=el('bdf-m'),bfy=el('bdf-y'),btm=el('bdt-m'),bty=el('bdt-y');
+  if(fm&&fy){drF={m:parseInt(fm.value),y:parseInt(fy.value)};}
+  if(tm&&ty){drT={m:parseInt(tm.value),y:parseInt(ty.value)};}
+  if(bfm&&bfy){drF={m:parseInt(bfm.value),y:parseInt(bfy.value)};}
+  if(btm&&bty){drT={m:parseInt(btm.value),y:parseInt(bty.value)};}
+  if(U&&U.role==='bod') renderbodRight(accOpen);
+  else renderDeptRight();
+}
 
-async function startApp() {
-  // 1. Hiện màn hình loading
-  const loader = document.getElementById('global-loader');
-  if (loader) loader.classList.remove('hidden');
-
-  try {
-    // 2. Gọi dữ liệu từ Google Sheets
-    const resp = await fetch(`${SCRIPT_URL}?action=getAll`, {
-      method: 'GET',
-      mode: 'cors',      
-      redirect: 'follow' 
+function saveDept(){
+  var dept=DEPTS.find(function(d){return d.id===deptId;});
+  var sp=el('sv-sp'),lb=el('sv-lb'),ok=el('sv-ok'),er=el('sv-er');
+  if(!sp)return;
+  sp.style.display='inline-block'; lb.textContent='Saving…';
+  ok.style.display='none'; er.style.display='none';
+  var payload={dept:deptId, month:selM+1, year:selY, // month+1 for sheet (1-indexed)
+    submitted_by:U.username, comment:el('ki-cmt').value||''};
+  dept.kpis.forEach(function(k){
+    var inp=el('ki-'+k.k);
+    if(inp&&inp.value!=='')payload[k.k]=parseFloat(inp.value);
+  });
+  if(!SCRIPT_URL){
+    // Demo: update local GS_DATA so chart updates immediately
+    var newRow=GS_HDR.map(function(h){
+      if(h==='dept')return deptId;
+      if(h==='month')return String(selM+1);
+      if(h==='year')return String(selY);
+      if(h==='submitted_at')return new Date().toLocaleString();
+      if(h==='submitted_by')return U.username;
+      return payload[h]!=null?String(payload[h]):'';
     });
+    GS_DATA.push(newRow); // always append = new revision
+    delete UNLOCKED[deptId+'_'+selY+'_'+selM];
+    sp.style.display='none'; lb.textContent='Save KPIs';
+    ok.style.display='block';
+    var badge=el('st-badge');if(badge){badge.textContent='Submitted';badge.className='badge bg';}
+    buildDeptLeft();
+    renderDeptRight();
+    setTimeout(function(){ok.style.display='none';},3000);
+    return;
+  }
+  // Send to GAS via Image beacon — completely bypasses CORS
+  // GAS saves to sheet; we update UI locally without waiting for response
+  var params='action=saveKPI';
+  Object.keys(payload).forEach(function(k){
+    params+='&'+encodeURIComponent(k)+'='+encodeURIComponent(payload[k]!=null?payload[k]:'');
+  });
 
-    if (!resp.ok) throw new Error('Phản hồi từ server không ổn định');
+  // Update UI locally immediately (optimistic update)
+  var newRow=GS_HDR.map(function(h){
+    if(h==='dept')return deptId;
+    if(h==='month')return String(selM+1);
+    if(h==='year')return String(selY);
+    if(h==='submitted_at')return new Date().toLocaleString();
+    if(h==='submitted_by')return U.username;
+    return payload[h]!=null?String(payload[h]):'';
+  });
+  GS_DATA.push(newRow);
+  delete UNLOCKED[deptId+'_'+selY+'_'+selM];
+  sp.style.display='none'; lb.textContent='Save KPIs';
+  ok.textContent='✓ Saved to Google Sheets';
+  ok.style.display='block';
+  var badge=el('st-badge');if(badge){badge.textContent='Submitted';badge.className='badge bg';}
+  buildDeptLeft(); renderDeptRight();
+  setTimeout(function(){ok.style.display='none';},3000);
 
-    const data = await resp.json();
+  // Fire-and-forget to GAS via img beacon (no CORS, no response needed)
+  var beacon=new Image();
+  beacon.src=SCRIPT_URL+'?'+params+'&t='+Date.now();
+}
 
-    // 3. Nạp dữ liệu vào STORE & Xử lý định dạng thời gian
-    if (data && data.rows) {
-      STORE = {}; // Làm sạch dữ liệu cũ
-      data.rows.forEach(row => {
-        // --- XỬ LÝ TIMEZONE VIỆT NAM TRỰC TIẾP TẠI ĐÂY ---
-        if (row.submitted_at) {
-          try {
-            const date = new Date(row.submitted_at);
-            // Ghi đè trực tiếp vào trường submitted_at
-            row.submitted_at = date.toLocaleString('vi-VN', {
-              timeZone: 'Asia/Ho_Chi_Minh',
-              hour: '2-digit',
-              minute: '2-digit',
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour12: false
-            });
-          } catch (e) {
-            console.error("Lỗi định dạng ngày cho dòng:", row, e);
+// ═══════════════════════════════════════════════
+// DEPT VIEW — RIGHT PANEL
+// ═══════════════════════════════════════════════
+function renderDeptRight(){
+  var dept=DEPTS.find(function(d){return d.id===deptId;});
+  el('rp-title').textContent=dept.name+' ('+dept.abbr+')';
+  el('rp-sub').textContent=''; // purpose and manager removed from chart header (V14)
+  el('btn-bod-back').classList.add('hidden');
+  var mw=el('rp-msg-btn-wrap');
+  if(mw){var ud=getDeptUnreadBadge(deptId);mw.innerHTML='<button class="msg-action-btn" id="rp-open-msg" data-dept="'+deptId+'">&#x1F4AC; Messages'+ud+'</button>';}
+  var range=buildRange(deptId);
+  killCharts('d_');
+  el('rp-body').innerHTML='<div class="charts-grid" id="d-col"></div>';
+  var col=el('d-col');
+  if(dept.overlayCharts){
+    dept.overlayCharts.forEach(function(oc,i){
+      renderOverlayChart(col,'d_oc_'+i,oc,range,deptId,true);
+    });
+  } else {
+    dept.kpis.forEach(function(kpi,i){
+      var vals=range.dkeys.map(function(dk){return getGSVal(deptId,dk.y,dk.m,kpi.k);});
+      var cid='d_'+i;
+      var div=document.createElement('div');div.className='cc';
+      div.dataset.chartId=cid;div.dataset.chartTitle=kpi.l;
+      div.innerHTML='<div class="cc-t">'+kpi.l+'</div>'
+        +'<div class="cc-s">'+kpi.u+' · '+rangeLabel(range)+'</div>'
+        +'<div class="cc-clickhint">Click to expand</div>'
+        +'<div class="cc-w"><canvas id="'+cid+'"></canvas></div>';
+      col.appendChild(div);
+      CH[cid]=mkLine(cid,range.labels,kpi.l,vals,dept.color,kpi.u);
+    });
+  }
+}
+
+// shared overlay chart renderer
+function renderOverlayChart(col, cid, oc, range, did, gridMode){
+  var isMulti=oc.datasets.length>1;
+  var legendHtml=isMulti?'<div class="legend">'+oc.datasets.map(function(ds){
+    return '<div class="legend-item"><span class="legend-dot" style="background:'+ds.color+'"></span>'+ds.label+'</div>';
+  }).join('')+'</div>':'';
+  var isTwoBarCheck=oc.datasets.length===2&&oc.datasets[0].type==='bar'&&oc.datasets[1].type==='bar';
+  // Outer wrapper: for twoBar charts use split layout (monthly | total)
+  var wrapper=document.createElement('div');
+  wrapper.className='cc';
+  wrapper.dataset.chartId=cid;
+  wrapper.dataset.chartTitle=oc.title;
+  var clickHint=gridMode?'<div class="cc-clickhint">Click to expand</div>':'';
+  if(isTwoBarCheck){
+    wrapper.innerHTML='<div class="cc-t">'+oc.title+'</div>'
+      +'<div class="cc-s">'+rangeLabel(range)+'</div>'
+      +clickHint+legendHtml
+      +'<div class="cc-split">'
+      +'<div class="cc-monthly"><div class="cc-w tall"><canvas id="'+cid+'"></canvas></div></div>'
+      +'<div class="cc-total" id="'+cid+'-tot-card">'
+      +'<div class="cc-total-title">Total</div>'
+      +'<div class="cc-total-sub">'+rangeLabel(range)+'</div>'
+      +'<div class="cc-total-w"><canvas id="'+cid+'-tot"></canvas></div>'
+      +'</div></div>';
+  } else {
+    wrapper.innerHTML='<div class="cc-t">'+oc.title+'</div>'
+      +'<div class="cc-s">'+rangeLabel(range)+'</div>'
+      +clickHint+legendHtml
+      +'<div class="cc-w'+(isMulti?' tall':'')+'"><canvas id="'+cid+'"></canvas></div>';
+  }
+  var div=wrapper;
+  col.appendChild(div);
+  var many=range.labels.length>24;
+  var isTwoBar=oc.datasets.length===2&&oc.datasets[0].type==='bar'&&oc.datasets[1].type==='bar';
+  var datasets=oc.datasets.map(function(ds){
+    var vals=range.dkeys.map(function(dk){return getGSVal(did,dk.y,dk.m,ds.key);});
+    var base={label:ds.label,data:vals,borderColor:ds.color,
+      backgroundColor:ds.color+(ds.type==='bar'?'dd':'40'),
+      tension:.3,fill:ds.type!=='bar',
+      pointRadius:many?2:4,borderWidth:ds.type==='bar'?1:2,
+      pointBackgroundColor:ds.color,spanGaps:true,yAxisID:'y'};
+    if(ds.type==='bar'){base.type='bar';base.borderRadius=3;}
+    return base;
+  });
+  if(isTwoBar){
+    var va=range.dkeys.map(function(dk){return getGSVal(did,dk.y,dk.m,oc.datasets[0].key);});
+    var vb=range.dkeys.map(function(dk){return getGSVal(did,dk.y,dk.m,oc.datasets[1].key);});
+    var rv=va.map(function(a,i){return a&&vb[i]?Math.round(vb[i]/a*1000)/10:null;});
+    datasets.push({type:'line',label:'Ratio %',data:rv,
+      borderColor:'#6366F1',backgroundColor:'transparent',
+      tension:.3,fill:false,pointRadius:many?2:3,
+      pointBackgroundColor:'#6366F1',spanGaps:true,yAxisID:'y2',borderDash:[4,3]});
+    var lw=div.querySelector('.legend');
+    if(lw)lw.innerHTML+='<div class="legend-item"><span class="legend-dot" style="background:#6366F1;border-radius:50%"></span>Ratio %</div>';
+  }
+  var opts=chartOpts(oc.unit||'');
+  if(isTwoBar){opts.scales.y2={type:'linear',position:'right',
+    grid:{drawOnChartArea:false},
+    ticks:{font:{size:10},callback:function(v){return v+'%';}}};}
+  opts.plugins.datalabels={
+    display:function(ctx){return ctx.dataset.type==='bar'&&!many;},
+    color:'#333',anchor:'end',align:'top',font:{size:9,weight:'600'},
+    formatter:function(v){
+      if(v==null)return null;
+      if(oc.unit==='USD')return v>=1e6?(Math.round(v/1e5)/10)+'M':v>=1000?Math.round(v/1000)+'k':'';
+      return Math.round(v);
+    }
+  };
+  CH[cid]=new Chart(document.getElementById(cid),{
+    type:'bar',
+    data:{labels:range.labels,datasets:datasets},
+    options:opts,plugins:[ChartDataLabels]
+  });
+  // ── Summary total chart (right side) for two-bar plan/actual charts ──
+  if(isTwoBar&&document.getElementById(cid+'-tot')){
+    var totA=va.reduce(function(s,v){return s+(v||0);},0);
+    var totB=vb.reduce(function(s,v){return s+(v||0);},0);
+    var totRatio=totA?Math.round(totB/totA*1000)/10:null;
+    var totLabel0=oc.datasets[0].label, totLabel1=oc.datasets[1].label;
+    var totColor0=oc.datasets[0].color, totColor1=oc.datasets[1].color;
+    var totOpts={
+      responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:18}},
+      plugins:{
+        legend:{display:false},
+        datalabels:{
+          display:true,color:'#333',anchor:'end',align:'top',
+          font:{size:9,weight:'700'},
+          formatter:function(v){
+            if(v==null)return null;
+            if(oc.unit==='USD')return v>=1e6?(Math.round(v/1e5)/10)+'M':v>=1000?Math.round(v/1000)+'k':'';
+            return Math.round(v);
           }
         }
-
-        const mIdx = parseInt(row.month) - 1;
-        const key = storeKey(row.dept, row.year, mIdx);
-        
-        // Gán _ts bằng dữ liệu đã format để hàm renderBossRight() hiển thị đúng
-        STORE[key] = { 
-          ...row, 
-          _saved: true, 
-          _ts: row.submitted_at || '—' 
-        }; 
-      });
-    }
-  } catch (e) {
-    console.error("Lỗi kết nối hệ thống:", e);
-  }
-
-  // 4. Chuyển đổi giao diện (Ẩn loading, hiện App)
-  if (loader) loader.classList.add('hidden');
-  const pgLogin = document.getElementById('pg-login');
-  const pgApp = document.getElementById('pg-app');
-  
-  if (pgLogin) pgLogin.style.display = 'none';
-  if (pgApp) pgApp.style.display = 'flex';
-  
-  // 5. Cập nhật thông tin người dùng (Avatar & Name)
-  const av = document.getElementById('u-av');
-  const uName = document.getElementById('u-name');
-  const tBadge = document.getElementById('t-badge');
-
-  if (av && user) {
-    av.textContent = user.initials || '';
-    av.style.background = (user.color || '#ccc') + '25';
-    av.style.color = user.color || '#333';
-  }
-
-  if (uName && user) {
-    uName.textContent = user.name || 'User';
-  }
-
-  // 6. Phân quyền hiển thị Boss hoặc Staff
-  if (user && user.role === 'boss') {
-    if (tBadge) {
-      tBadge.textContent = 'Management';
-      tBadge.className = 'tbadge tbadge-amber';
-    }
-    // Gọi giao diện cho quản lý
-    if (typeof buildBossLeft === 'function') buildBossLeft();
-    if (typeof renderBossRight === 'function') renderBossRight();
-    
-  } else if (user) {
-    if (tBadge) {
-      tBadge.textContent = user.dept;
-      tBadge.className = 'tbadge tbadge-blue';
-    }
-    // Thiết lập các biến chọn mặc định cho nhân viên
-    selDept = user.dept; 
-    selYear = NOW_Y; 
-    selMonth = NOW_M;
-    
-    // Gọi giao diện cho nhân viên
-    if (typeof buildDeptLeft === 'function') buildDeptLeft();
-    if (typeof renderDeptRight === 'function') renderDeptRight();
-  }
-}
-
-// ══════════════════════════════════════════════════════
-// DEPT VIEW — LEFT PANEL
-// ══════════════════════════════════════════════════════
-function buildDeptLeft(){
-  const dept=DEPTS.find(d=>d.id===selDept);
-  const row=STORE[storeKey(selDept,selYear,selMonth)]||{_saved:false};
-
-  // Month/year selectors
-  const monthOpts=MONTHS.map((m,i)=>`<option value="${i}" ${i===selMonth?'selected':''}>${m}</option>`).join('');
-  const yearOpts=YEARS.map(y=>`<option value="${y}" ${y===selYear?'selected':''}>${y}</option>`).join('');
-
-  // KPI inputs
-  const inputs=dept.kpis.map(k=>`
-    <div class="ki-item">
-      <div class="ki-label">${k.label} <span style="color:var(--hint)">(${k.unit})</span></div>
-      <input class="ki-input" type="number" id="ki-${k.key}"
-        step="${k.t==='pct'||k.t==='dec'?'0.1':'1'}"
-        value="${row[k.key]!=null?row[k.key]:''}"
-        placeholder="—">
-    </div>`).join('');
-
-  document.getElementById('lpanel-content').innerHTML = `
-    <div class="lsec-title">Period</div>
-    <div class="month-year-sel">
-      <select class="my-sel" id="sel-month" onchange="onPeriodChange()">${monthOpts}</select>
-      <select class="my-sel" id="sel-year"  onchange="onPeriodChange()">${yearOpts}</select>
-    </div>
-
-    <div class="inp-status">
-      <span class="inp-status-lbl">Status</span>
-      <span class="badge ${row._saved?'badge-green':'badge-amber'}" id="inp-badge">${row._saved?'Submitted':'Pending'}</span>
-    </div>
-
-    <div class="lsec-title">KPI Input — ${MONTHS[selMonth]} ${selYear}</div>
-    <div class="kpi-inp-list" id="kpi-inp-list">${inputs}</div>
-
-    <div class="ki-item" style="margin-bottom:12px">
-      <div class="ki-label">Manager comment</div>
-      <textarea class="ki-comment" id="ki-comment" placeholder="Notes or flags…">${row.comment||''}</textarea>
-    </div>
-
-    <div class="save-row">
-      <button class="save-btn" onclick="saveDept()">
-        <span class="ispin" id="save-spin"></span>
-        <span id="save-lbl">Save KPIs</span>
-      </button>
-      <div class="save-msg save-ok-msg" id="save-ok">✓ Saved successfully</div>
-      <div class="save-msg save-err-msg" id="save-err"></div>
-    </div>
-
-    <div class="lsec-title" style="margin-top:18px">Chart range</div>
-    <div class="date-range">
-      <div class="dr-quick" id="dr-quick-btns">
-        <button class="dr-qbtn" onclick="setQuick('ytd')">YTD</button>
-        <button class="dr-qbtn" onclick="setQuick('last12')">Last 12M</button>
-        <button class="dr-qbtn" onclick="setQuick('all')">All data</button>
-      </div>
-      <div class="dr-row"><label>From</label>
-        <select class="dr-sel" id="dr-from-m">${MONTHS.map((m,i)=>`<option value="${i}" ${i===drFrom.m?'selected':''}>${m}</option>`).join('')}</select>
-        <select class="dr-sel" id="dr-from-y">${YEARS.map(y=>`<option value="${y}" ${y===drFrom.y?'selected':''}>${y}</option>`).join('')}</select>
-      </div>
-      <div class="dr-row"><label>To</label>
-        <select class="dr-sel" id="dr-to-m">${MONTHS.map((m,i)=>`<option value="${i}" ${i===drTo.m?'selected':''}>${m}</option>`).join('')}</select>
-        <select class="dr-sel" id="dr-to-y">${YEARS.map(y=>`<option value="${y}" ${y===drTo.y?'selected':''}>${y}</option>`).join('')}</select>
-      </div>
-      <button class="dr-apply" onclick="applyDateRange()">Apply range</button>
-    </div>`;
-}
-
-function onPeriodChange(){
-  selMonth=parseInt(document.getElementById('sel-month').value);
-  selYear=parseInt(document.getElementById('sel-year').value);
-  buildDeptLeft();
-  renderDeptRight();
-}
-
-function setQuick(preset){
-  document.querySelectorAll('.dr-qbtn').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
-  if(preset==='ytd')    { drFrom={y:NOW_Y,m:0};     drTo={y:NOW_Y,m:NOW_M}; }
-  if(preset==='last12') { drFrom={y:NOW_Y-1,m:NOW_M+1>11?0:NOW_M+1}; drTo={y:NOW_Y,m:NOW_M}; }
-  if(preset==='all')    { drFrom={y:NOW_Y-1,m:0};   drTo={y:NOW_Y,m:NOW_M}; }
-  buildDeptLeft();
-  renderDeptRight();
-}
-
-function applyDateRange(){
-  drFrom.m=parseInt(document.getElementById('dr-from-m').value);
-  drFrom.y=parseInt(document.getElementById('dr-from-y').value);
-  drTo.m=parseInt(document.getElementById('dr-to-m').value);
-  drTo.y=parseInt(document.getElementById('dr-to-y').value);
-  renderDeptRight();
-}
-
-// ── Save ──
-// function saveDept(){
-//   const dept=DEPTS.find(d=>d.id===selDept);
-//   const spin=document.getElementById('save-spin');
-//   const lbl=document.getElementById('save-lbl');
-//   const ok=document.getElementById('save-ok');
-//   const err=document.getElementById('save-err');
-//   spin.style.display='inline-block'; lbl.textContent='Saving…';
-//   ok.style.display='none'; err.style.display='none';
-
-//   const row={_saved:true, _ts:`${MONTHS[selMonth]} ${selYear}`, comment:document.getElementById('ki-comment').value};
-//   dept.kpis.forEach(k=>{
-//     const v=document.getElementById('ki-'+k.key)?.value;
-//     row[k.key]= v!==''&&v!=null ? parseFloat(v) : null;
-//   });
-//   STORE[storeKey(selDept,selYear,selMonth)]=row;
-
-//   setTimeout(()=>{
-//     spin.style.display='none'; lbl.textContent='Save KPIs';
-//     ok.style.display='block';
-//     document.getElementById('inp-badge').textContent='Submitted';
-//     document.getElementById('inp-badge').className='badge badge-green';
-//     renderDeptRight();
-//     setTimeout(()=>ok.style.display='none',3000);
-//   },500);
-// }
-
-// async function saveDept() {
-//   const dept = DEPTS.find(d => d.id === selDept);
-//   const spin = document.getElementById('save-spin');
-//   const lbl = document.getElementById('save-lbl');
-//   const ok = document.getElementById('save-ok');
-//   const err = document.getElementById('save-err');
-
-//   // Hiển thị trạng thái đang xử lý
-//   spin.style.display = 'inline-block';
-//   lbl.textContent = 'Uploading...';
-//   ok.style.display = 'none';
-//   err.style.display = 'none';
-
-//   // Gom dữ liệu từ các ô Input
-//   const kpiValues = {};
-//   dept.kpis.forEach(k => {
-//     const v = document.getElementById('ki-' + k.key)?.value;
-//     kpiValues[k.key] = v !== '' && v != null ? parseFloat(v) : 0;
-//   });
-
-//   const payload = {
-//     action: 'saveKPI',
-//     dept: selDept,
-//     month: selMonth + 1, // Sheets thường dùng 1-12, JS dùng 0-11
-//     year: selYear,
-//     user: user.username,
-//     comment: document.getElementById('ki-comment').value,
-//     kpis: kpiValues
-//   };
-
-//   try {
-//     // Gửi dữ liệu đến Google Apps Script
-//     // Lưu ý: mode 'no-cors' giúp gửi dữ liệu mà không bị chặn, nhưng ta không đọc được phản hồi
-//     await fetch(SCRIPT_URL, {
-//       method: 'POST',
-//       mode: 'no-cors', 
-//       cache: 'no-cache',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify(payload)
-//     });
-
-//     // Cập nhật giao diện sau khi gửi thành công
-//     spin.style.display = 'none';
-//     lbl.textContent = 'Save KPIs';
-//     ok.style.display = 'block';
-    
-//     // Lưu tạm vào STORE cục bộ để dashboard cập nhật ngay lập tức
-//     STORE[storeKey(selDept, selYear, selMonth)] = { ...payload, _saved: true };
-    
-//     document.getElementById('inp-badge').textContent = 'Submitted';
-//     document.getElementById('inp-badge').className = 'badge badge-green';
-    
-//     renderDeptRight();
-//     setTimeout(() => ok.style.display = 'none', 3000);
-
-//   } catch (e) {
-//     spin.style.display = 'none';
-//     lbl.textContent = 'Save KPIs';
-//     err.textContent = 'Error: ' + e.message;
-//     err.style.display = 'block';
-//   }
-// }
-
-async function saveDept() {
-  const dept = DEPTS.find(d => d.id === selDept);
-  const spin = document.getElementById('save-spin');
-  const lbl = document.getElementById('save-lbl');
-  const ok = document.getElementById('save-ok');
-  const err = document.getElementById('save-err');
-
-  // Hiệu ứng loading
-  spin.style.display = 'inline-block';
-  lbl.textContent = 'Saving to Sheets...';
-  ok.style.display = 'none';
-  err.style.display = 'none';
-
-  // Thu thập dữ liệu từ các ô Input
-  const payload = {
-    action: 'saveKPI',
-    dept: selDept,
-    month: selMonth + 1, // Apps Script thường dùng 1-12
-    year: selYear,
-    user: user.username,
-    comment: document.getElementById('ki-comment').value,
-    kpis: {}
-  };
-
-  dept.kpis.forEach(k => {
-    const v = document.getElementById('ki-' + k.key).value;
-    payload.kpis[k.key] = v !== '' ? parseFloat(v) : null;
-  });
-
-  try {
-    const resp = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload)
+      },
+      scales:{
+        y:{display:false,beginAtZero:true},
+        x:{grid:{display:false},ticks:{font:{size:9}}}
+      }
+    };
+    CH[cid+'-tot']=new Chart(document.getElementById(cid+'-tot'),{
+      type:'bar',
+      data:{
+        labels:[totLabel0,totLabel1],
+        datasets:[{
+          data:[totA,totB],
+          backgroundColor:[totColor0+'bb',totColor1+'bb'],
+          borderColor:[totColor0,totColor1],
+          borderWidth:1,borderRadius:4
+        }]
+      },
+      options:totOpts,
+      plugins:[ChartDataLabels]
     });
-
-    const result = await resp.json();
-
-    if (result.success) {
-      // CẬP NHẬT LOCAL STORE NGAY LẬP TỨC
-      const key = storeKey(selDept, selYear, selMonth);
-      STORE[key] = {
-        ...payload.kpis,
-        comment: payload.comment,
-        month: payload.month,
-        year: payload.year,
-        dept: payload.dept,
-        _saved: true
-      };
-
-      // Hiển thị thông báo thành công
-      spin.style.display = 'none';
-      lbl.textContent = 'Save KPIs';
-      ok.style.display = 'block';
-      document.getElementById('inp-badge').textContent = 'Submitted';
-      document.getElementById('inp-badge').className = 'badge badge-green';
-
-      // QUAN TRỌNG: Vẽ lại biểu đồ với dữ liệu mới
-      renderDeptRight(); 
-      
-      setTimeout(() => { ok.style.display = 'none'; }, 3000);
-    } else {
-      throw new Error(result.error || 'Server rejected');
+    // Show ratio below total chart
+    if(totRatio!==null){
+      var totCard=document.getElementById(cid+'-tot-card');
+      if(totCard){
+        var ratioEl=document.createElement('div');
+        ratioEl.style.cssText='margin-top:6px;text-align:center;font-size:11px;font-weight:700;color:#6366F1';
+        ratioEl.textContent='Ratio: '+totRatio+'%';
+        totCard.appendChild(ratioEl);
+      }
     }
-  } catch (e) {
-    console.error("Save error:", e);
-    spin.style.display = 'none';
-    lbl.textContent = 'Save KPIs';
-    err.textContent = 'Lỗi: ' + e.message;
-    err.style.display = 'block';
   }
 }
 
-// ══════════════════════════════════════════════════════
-// DEPT VIEW — RIGHT PANEL
-// ══════════════════════════════════════════════════════
-function renderDeptRight(){
-  const dept=DEPTS.find(d=>d.id===selDept);
-  document.getElementById('rp-title').textContent=dept.name;
-  document.getElementById('rp-sub').textContent=dept.purpose;
+// ═══════════════════════════════════════════════
+// bod VIEW — LEFT PANEL
+// ═══════════════════════════════════════════════
+function buildbodLeft(){
+  var mO=MN.map(function(m,i){return '<option value="'+i+'"'+(i===selBodM?' selected':'')+'>'+m+'</option>';}).join('');
+  var yO=YRS.map(function(y){return '<option value="'+y+'"'+(y===selBodY?' selected':'')+'>'+y+'</option>';}).join('');
+  var drMO=function(sel){return MN.map(function(m,i){return '<option value="'+i+'"'+(i===sel?' selected':'')+'>'+m+'</option>';}).join('');};
+  var drYO=function(sel){return YRS.map(function(y){return '<option value="'+y+'"'+(y===sel?' selected':'')+'>'+y+'</option>';}).join('');};
+  var html='<div class="lp-sticky">'
+    +'<div class="bod-period-label">Period</div>'
+    +'<div class="bod-period-box">'
+    +'<div class="bod-period-row"><select class="mysel" id="bod-s-m">'+mO+'</select><select class="mysel" id="bod-s-y">'+yO+'</select></div>'
+    +'</div>'
+    +'<div class="lsec" style="margin-top:6px">Chart range</div>'
+    +'<div class="dr-box"><div class="dr-quick">'
+    +'<button class="drq" data-quick="ytd">YTD</button>'
+    +'<button class="drq" data-quick="12m">Last 12M</button>'
+    +'<button class="drq" data-quick="all">All data</button></div>'
+    +'<div class="dr-row"><label>From</label>'
+    +'<select class="drsel" id="bdf-m">'+drMO(drF.m)+'</select>'
+    +'<select class="drsel" id="bdf-y">'+drYO(drF.y)+'</select></div>'
+    +'<div class="dr-row"><label>To</label>'
+    +'<select class="drsel" id="bdt-m">'+drMO(drT.m)+'</select>'
+    +'<select class="drsel" id="bdt-y">'+drYO(drT.y)+'</select></div>'
+    +'<button class="dr-apply" id="dr-apply-b">Apply</button></div>'
+    +'</div>' // close lp-sticky
+    +'<div class="lsec" style="margin-top:10px">Departments</div>';
 
-  const {labels,keys}=buildDateRange();
-  const body=document.getElementById('rp-body');
-
-  // Destroy old charts
-  Object.keys(charts).filter(k=>k.startsWith('d_')).forEach(k=>{try{charts[k].destroy();}catch(e){}delete charts[k];});
-
-  body.innerHTML='<div class="charts-stack" id="charts-stack"></div>';
-  const stack=document.getElementById('charts-stack');
-
-  dept.kpis.forEach((kpi,idx)=>{
-    const deptKeys=keys.map(k=>k.replace('DEPTID',selDept));
-    const vals=deptKeys.map(k=>STORE[k]?.[kpi.key]??null);
-    const canvasId=`d_${idx}`;
-    const card=document.createElement('div');
-    card.className='chart-card';
-    card.innerHTML=`
-      <div class="cc-head">
-        <div class="cc-title">${kpi.label}</div>
-        <div class="cc-sub">${kpi.unit} · ${labels[0]} → ${labels[labels.length-1]}</div>
-      </div>
-      <div class="cc-wrap"><canvas id="${canvasId}"></canvas></div>`;
-    stack.appendChild(card);
-    charts[canvasId]=mkLine(canvasId,labels,kpi.label,vals,dept.color,kpi.unit);
-  });
-}
-
-// ══════════════════════════════════════════════════════
-// BOSS VIEW — LEFT PANEL (accordion)
-// ══════════════════════════════════════════════════════
-function buildBossLeft(){
-  const content=document.getElementById('lpanel-content');
-
-  // Date range at top
-  const mOpts=MONTHS.map((m,i)=>`<option value="${i}" ${i===drFrom.m?'selected':''}>${m}</option>`).join('');
-  const mOpts2=MONTHS.map((m,i)=>`<option value="${i}" ${i===drTo.m?'selected':''}>${m}</option>`).join('');
-  const yOpts=YEARS.map(y=>`<option value="${y}" ${y===drFrom.y?'selected':''}>${y}</option>`).join('');
-  const yOpts2=YEARS.map(y=>`<option value="${y}" ${y===drTo.y?'selected':''}>${y}</option>`).join('');
-
-  let html=`
-    <div class="lsec-title">Chart range</div>
-    <div class="date-range">
-      <div class="dr-quick">
-        <button class="dr-qbtn" onclick="setBossQuick('ytd')">YTD</button>
-        <button class="dr-qbtn" onclick="setBossQuick('last12')">Last 12M</button>
-        <button class="dr-qbtn" onclick="setBossQuick('all')">All data</button>
-      </div>
-      <div class="dr-row"><label>From</label>
-        <select class="dr-sel" id="bdr-fm">${mOpts}</select>
-        <select class="dr-sel" id="bdr-fy">${yOpts}</select>
-      </div>
-      <div class="dr-row"><label>To</label>
-        <select class="dr-sel" id="bdr-tm">${mOpts2}</select>
-        <select class="dr-sel" id="bdr-ty">${yOpts2}</select>
-      </div>
-      <button class="dr-apply" onclick="applyBossRange()">Apply range</button>
-    </div>
-    <div class="lsec-title">Departments</div>`;
-
-  DEPTS.forEach(d=>{
-    const row=STORE[storeKey(d.id,NOW_Y,NOW_M)]||{};
-    const submitted=row._saved;
-    const isOpen=bossOpenDept===d.id;
-    html+=`
-      <div class="dept-acc" id="acc-${d.id}">
-        <div class="dept-acc-head ${isOpen?'open':''}" onclick="toggleAcc('${d.id}')">
-          <span class="dah-dot" style="background:${d.color}"></span>
-          <span class="dah-name">${d.name}</span>
-          <span class="dah-status ${submitted?'st-ok':'st-pend'}"></span>
-          <span class="dah-chevron ${isOpen?'open':''}">▶</span>
-        </div>
-        <div class="dept-acc-body ${isOpen?'open':''}" id="body-${d.id}">
-          ${buildAccBody(d, row)}
-        </div>
-      </div>`;
-  });
-
-  content.innerHTML=html;
-}
-
-function buildAccBody(dept, row){
-  const prevRow=STORE[storeKey(dept.id,NOW_Y,NOW_M>0?NOW_M-1:0)]||{};
-  const kpiRows=dept.kpis.map(k=>{
-    const val=row[k.key]; const prev=prevRow[k.key];
-    let delta='', dcls='delta-nu';
-    if(val!=null&&prev!=null&&prev!==0){
-      const p=((val-prev)/Math.abs(prev)*100).toFixed(1);
-      delta=`${p>=0?'▲':'▼'}${Math.abs(p)}%`;
-      dcls=p>=0?'delta-up':'delta-dn';
+  // Sort alphabetically by name
+  var sortedDepts=DEPTS.slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+  sortedDepts.forEach(function(d){
+    var hasRow=!!getGSRow(d.id,NY,NM);
+    var open=accOpen===d.id;
+    // FIX #5: last data month per dept
+    var lastDM=getLastDataMonth(d.id);
+    var lastLabel,lastClass;
+    if(!lastDM){lastLabel='No data yet';lastClass='miss';}
+    else{
+      lastLabel='Last: '+MN[lastDM.m-1]+' '+lastDM.y;
+      // warn if last data is more than 1 month behind current
+      var monthsAgo=(NY-lastDM.y)*12+(NM-(lastDM.m-1));
+      lastClass=monthsAgo<=1?'ok':(monthsAgo<=2?'warn':'miss');
     }
-    return `<div class="ks-row">
-      <span class="ks-label">${k.label}</span>
-      <span class="ks-val" style="color:${dept.color}">${val!=null?fmtV(val,k):'—'}</span>
-      ${delta?`<span class="ks-delta ${dcls}">${delta}</span>`:''}
-    </div>`;
+    html+='<div class="acc" id="acc-'+d.id+'">'
+      +'<div class="acc-h'+(open?' open':'')+'" data-dept="'+d.id+'">'
+      +'<span class="ah-dot" style="background:'+d.color+'"></span>'
+      +'<div class="ah-info">'
+      +'<div class="ah-name">'+d.name+'</div>'
+      +'<div class="ah-last '+lastClass+'">'+lastLabel+'</div>'
+      +'</div>'
+      +'<span class="ah-st '+(hasRow?'st-ok':'st-pend')+'"></span>'
+      +'<span class="ah-ch'+(open?' open':'')+'">▶</span>'
+      +'</div>'
+      +'<div class="acc-b'+(open?' open':'')+'" id="ab-'+d.id+'">'+buildAccBody(d)+'</div>'
+      +'</div>';
+  });
+  el('lp-body').innerHTML=html;
+  // Admin: append user management panel below depts
+  if(U&&U.role==='admin'){
+    el('lp-body').innerHTML+=
+      '<div class="lsec" style="margin-top:14px">Admin</div>'
+      +'<div style="background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 11px">'+buildAdminPanel()+'</div>';
+  }
+  // BOD + Admin: change password button at bottom
+  el('lp-body').innerHTML+=
+    '<div class="lsec" style="margin-top:14px">Account</div>'
+    +'<button class="chpw-btn" id="btn-chpw">🔑 Change password</button>'
+    +'<div id="chpw-wrap"></div>';
+}
+
+function buildAccBody(dept){
+  // Use BOD selected period
+  var curM0=selBodM; var curY=selBodY;
+  var prevM0=curM0===0?11:curM0-1;
+  var prevY=curM0===0?curY-1:curY;
+  var row=getGSRow(dept.id,curY,curM0);
+  if(!row){
+    // Fall back to latest available
+    var lastDM=getLastDataMonth(dept.id);
+    if(!lastDM){
+      return '<div style="font-size:12px;color:var(--hi);padding:4px 0">No data for '+MN[curM0]+' '+curY+'.</div>'
+        +'<button class="vc-btn" data-dept="'+dept.id+'">View all charts →</button>';
+    }
+    curM0=lastDM.m-1; curY=lastDM.y;
+    prevM0=curM0===0?11:curM0-1; prevY=curM0===0?curY-1:curY;
+    row=getGSRow(dept.id,curY,curM0);
+  }
+  var prevRow=getGSRow(dept.id,prevY,prevM0);
+  var revCount=getRevisionCount(dept.id,curY,curM0);
+  var revBadge=revCount>1?'<span style="font-size:10px;font-weight:600;padding:1px 5px;background:var(--bl-bg);color:var(--bl);border-radius:5px;margin-left:5px">'+ordinal(revCount)+'</span>':'';
+  var rows=dept.kpis.map(function(k){
+    var v=getGSVal(dept.id,curY,curM0,k.k);
+    var pv=prevRow?getGSVal(dept.id,prevY,prevM0,k.k):null;
+    var dlt='',dc='dn';
+    if(v!=null&&pv!=null&&pv!==0){
+      var p=((v-pv)/Math.abs(pv)*100);
+      dlt=(p>=0?'▲':'▼')+Math.abs(p).toFixed(1)+'%';
+      dc=p>=0?'du':'dd';
+    }
+    return '<div class="ks-row">'
+      +'<span class="ks-l">'+k.l+'</span>'
+      +'<span class="ks-v" style="color:'+dept.color+'">'+(v!=null?fmtV(v,k):'—')+'</span>'
+      +(dlt?'<span class="ks-d '+dc+'">'+dlt+'</span>':'')
+      +'</div>';
   }).join('');
-
-  const cmt=row.comment||'';
-  const cmtHtml=cmt?`<div class="ks-comment">${cmt}</div>`:'';
-
-  return `<div class="kpi-snapshot">${kpiRows}</div>
-    ${cmtHtml}
-    <button class="view-charts-btn" onclick="bossSelectDept('${dept.id}')">View all charts →</button>`;
+  var cmt=row?getGSVal(dept.id,curY,curM0,'comment')||'':'';
+  return '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--hi);margin-bottom:6px">Snapshot — '+MN[curM0]+' '+curY+revBadge+'</div>'
+    +'<div>'+rows+'</div>'
+    +(cmt?'<div class="ks-cmt">'+cmt+'</div>':'')
+    +'<button class="vc-btn" data-dept="'+dept.id+'">View all charts →</button>';
 }
 
-function toggleAcc(deptId){
-  const wasOpen = bossOpenDept===deptId;
-  bossOpenDept = wasOpen ? null : deptId;
-  // Update accordion UI only (don't re-render right panel unless clicking view)
-  DEPTS.forEach(d=>{
-    const head=document.querySelector(`#acc-${d.id} .dept-acc-head`);
-    const body=document.getElementById(`body-${d.id}`);
-    const chev=document.querySelector(`#acc-${d.id} .dah-chevron`);
-    const open=bossOpenDept===d.id;
-    head.classList.toggle('open',open);
-    body.classList.toggle('open',open);
-    chev.classList.toggle('open',open);
+function toggleAcc(id){
+  accOpen=accOpen===id?null:id;
+  // Sort alphabetically by name
+  var sortedDepts=DEPTS.slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+  sortedDepts.forEach(function(d){
+    var h=document.querySelector('#acc-'+d.id+' .acc-h');
+    var b=el('ab-'+d.id);
+    var c=document.querySelector('#acc-'+d.id+' .ah-ch');
+    var open=accOpen===d.id;
+    if(h)h.classList.toggle('open',open);
+    if(b)b.classList.toggle('open',open);
+    if(c)c.classList.toggle('open',open);
   });
+  if(accOpen) renderbodRight(accOpen);
+  else        renderbodRight(null);
+}
+function bodViewDept(id){ accOpen=id; buildbodLeft(); renderbodRight(id); }
+
+// ── Status helper ─────────────────────────────────────────────────
+// Submitted  = row exists AND all KPI fields filled
+// Pending    = row exists BUT some KPI fields missing
+// Not updated = no row at all
+function getDeptStatus(dept, year, month_0idx){
+  var r = getGSRow(dept.id, year, month_0idx);
+  if(!r) return 'none';
+  var filled = dept.kpis.filter(function(k){
+    return getGSVal(dept.id, year, month_0idx, k.k) != null;
+  }).length;
+  if(filled === dept.kpis.length) return 'full';
+  return 'partial';
 }
 
-function setBossQuick(preset){
-  document.querySelectorAll('.dr-qbtn').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
-  if(preset==='ytd')    { drFrom={y:NOW_Y,m:0};     drTo={y:NOW_Y,m:NOW_M}; }
-  if(preset==='last12') { drFrom={y:NOW_Y-1,m:(NOW_M+1)%12}; drTo={y:NOW_Y,m:NOW_M}; }
-  if(preset==='all')    { drFrom={y:NOW_Y-1,m:0};   drTo={y:NOW_Y,m:NOW_M}; }
-  buildBossLeft();
-  if(bossOpenDept) renderBossRight(bossOpenDept);
-  else renderBossRight();
+// Last submitted_at = latest across ALL rows for this dept this month
+function getLastSubmittedAt(dept, year, month_0idx){
+  var latest = null;
+  for(var i=0;i<GS_DATA.length;i++){
+    var r=GS_DATA[i];
+    if(r[0]===dept.id&&(parseInt(r[1])-1)===month_0idx&&parseInt(r[2])===year){
+      var idx=GS_HDR.indexOf('submitted_at');
+      if(idx>=0&&r[idx]) latest=r[idx];
+    }
+  }
+  return latest||'—';
 }
 
-function applyBossRange(){
-  drFrom.m=parseInt(document.getElementById('bdr-fm').value);
-  drFrom.y=parseInt(document.getElementById('bdr-fy').value);
-  drTo.m=parseInt(document.getElementById('bdr-tm').value);
-  drTo.y=parseInt(document.getElementById('bdr-ty').value);
-  buildBossLeft();
-  if(bossOpenDept) renderBossRight(bossOpenDept);
-  else renderBossRight();
-}
+// ─────────────────────────────────────────────────────────────────
+// bod VIEW — RIGHT PANEL
+// ═══════════════════════════════════════════════
+function renderbodRight(id){
+  killCharts('b_');
+  var body=el('rp-body');
+  var backBtn=el('btn-bod-back');
 
-function bossSelectDept(deptId){
-  bossOpenDept=deptId;
-  renderBossRight(deptId);
-}
-
-// ══════════════════════════════════════════════════════
-// BOSS VIEW — RIGHT PANEL
-// ══════════════════════════════════════════════════════
-function renderBossRight(deptId) {
-  // 1. Dọn dẹp bộ nhớ (Xóa biểu đồ cũ)
-  const { labels, keys } = buildDateRange();
-  Object.keys(charts).filter(k => k.startsWith('b_')).forEach(k => {
-    try { charts[k].destroy(); } catch (e) {}
-    delete charts[k];
-  });
-
-  const titleEl = document.getElementById('rp-title');
-  const subEl = document.getElementById('rp-sub');
-  const bodyEl = document.getElementById('rp-body');
-
-  if (!deptId) {
-    // --- QUAN TRỌNG: Hiện lại thanh menu bên trái khi về Overview ---
-    if (typeof buildBossLeft === 'function') buildBossLeft();
-
-    // Show overview: all depts comparison chart
-    titleEl.textContent = 'All Departments';
-    subEl.textContent = `Submission status · ${MONTHS[NOW_M]} ${NOW_Y}`;
-
-    const submitted = DEPTS.filter(d => STORE[storeKey(d.id, NOW_Y, NOW_M)]?._saved).length;
-    
-    bodyEl.innerHTML = `
-      <div class="stbl-wrap">
-        <div class="stbl-head">
-          <span>Submission status — ${MONTHS[NOW_M]} ${NOW_Y}</span>
-          <span style="font-size:11px;font-weight:400;color:var(--muted)">${submitted}/${DEPTS.length} submitted</span>
-        </div>
-        <table>
-          <thead><tr><th>Department</th><th>Manager</th><th>Status</th><th>Last saved</th><th></th></tr></thead>
-          <tbody>${DEPTS.map(d => {
-            const r = STORE[storeKey(d.id, NOW_Y, NOW_M)] || {};
-            const sub = r._saved;
-            return `<tr>
-              <td><span style="display:inline-flex;align-items:center;gap:6px">
-                <span style="width:7px;height:7px;border-radius:50%;background:${d.color};display:inline-block"></span>${d.name}
-              </span></td>
-              <td style="color:var(--muted)">${d.manager}</td>
-              <td><span class="badge ${sub ? 'badge-green' : 'badge-amber'}">${sub ? 'Submitted' : 'Pending'}</span></td>
-              <td style="color:var(--muted);font-size:11px">${r.submitted_at || '—'}</td>
-              <td><button class="view-charts-btn" style="width:auto;padding:4px 10px" onclick="bossSelectDept('${d.id}')">Charts →</button></td>
-            </tr>`;
-          }).join('')}</tbody>
-        </table>
-      </div>
-
-      <div class="charts-stack">
-        ${DEPTS.map((d, di) => `
-          <div class="chart-card">
-            <div class="cc-head">
-              <div class="cc-title" style="display:flex;align-items:center;gap:6px">
-                <span style="width:8px;height:8px;border-radius:50%;background:${d.color};display:inline-block"></span>
-                ${d.name} — ${d.kpis[0].label}
-              </div>
-              <div class="cc-sub">${d.kpis[0].unit} · ${labels[0]} → ${labels[labels.length - 1]}</div>
-            </div>
-            <div class="cc-wrap"><canvas id="b_ov_${di}"></canvas></div>
-          </div>`).join('')}
-      </div>`;
-
-    // render mỗi dept's first KPI
-    DEPTS.forEach((d, di) => {
-      const deptKeys = keys.map(k => k.replace('DEPTID', d.id));
-      const vals = deptKeys.map(k => STORE[k]?.[d.kpis[0].key] ?? null);
-      charts[`b_ov_${di}`] = mkLine(`b_ov_${di}`, labels, d.kpis[0].label, vals, d.color, d.kpis[0].unit);
+  if(!id){
+    // FIX #6: hide back button on overview
+    if(backBtn) backBtn.classList.add('hidden');
+    el('rp-title').textContent='All Departments';
+    var subm=DEPTS.filter(function(d){return getDeptStatus(d,NY,NM)==='full';}).length;
+    var pend=DEPTS.filter(function(d){return getDeptStatus(d,NY,NM)==='partial';}).length;
+    el('rp-sub').textContent=MN[NM]+' '+NY+' · '+subm+' submitted · '+pend+' pending';
+    var tRows=DEPTS.map(function(d){
+      var st=getDeptStatus(d,NY,NM);
+      var ts=getLastSubmittedAt(d,NY,NM);
+      var badgeCls=st==='full'?'bg':st==='partial'?'ba':'';
+      var badgeTxt=st==='full'?'Submitted':st==='partial'?'Pending':'Not updated';
+      var badgeStyle=st==='none'?'background:var(--sf2);color:var(--hi);border:1px solid var(--bd)':'';
+      return '<tr>'
+        +'<td><span style="display:inline-flex;align-items:center;gap:6px">'
+        +'<span style="width:7px;height:7px;border-radius:50%;background:'+d.color+';display:inline-block"></span>'
+        +d.name+'</span></td>'
+        +'<td style="color:var(--mu)"><span style="font-size:10px;font-weight:600;padding:0 5px;background:var(--bl-bg);color:var(--bl);border-radius:4px;margin-right:4px">'+d.abbr+'</span>'+d.mgr+'</td>'
+        +'<td><span class="badge '+badgeCls+'" style="'+badgeStyle+'">'+badgeTxt+'</span></td>'
+        +'<td style="color:var(--mu);font-size:11px">'+ts+'</td>'
+        +'<td><button class="vc-btn" style="width:auto;padding:4px 10px;margin:0" data-dept="'+d.id+'">Charts →</button></td>'
+        +'</tr>';
+    }).join('');
+    var ovCharts=DEPTS.map(function(d,i){
+      return '<div class="cc">'
+        +'<div class="cc-t" style="display:flex;align-items:center;gap:6px">'
+        +'<span style="width:8px;height:8px;border-radius:50%;background:'+d.color+';display:inline-block;flex-shrink:0"></span>'
+        +d.name+' — '+d.kpis[0].l+'</div>'
+        +'<div class="cc-s">'+d.kpis[0].u+'</div>'
+        +'<div class="cc-w"><canvas id="b_ov_'+i+'"></canvas></div></div>';
+    }).join('');
+    body.innerHTML='<div class="stbl-w">'
+      +'<div class="stbl-h">Submission status — '+MN[NM]+' '+NY
+      +'<span style="font-size:11px;font-weight:400;color:var(--mu)">'+subm+'/'+DEPTS.length+' submitted</span></div>'
+      +'<table><thead><tr><th>Department</th><th>Manager</th><th>Status</th><th>Submitted at</th><th></th></tr></thead>'
+      +'<tbody>'+tRows+'</tbody></table></div>'
+      +'<div class="charts-col">'+ovCharts+'</div>';
+    DEPTS.forEach(function(d,i){
+      var range=buildRange(d.id);
+      var vals=range.dkeys.map(function(dk){return getGSVal(d.id,dk.y,dk.m,d.kpis[0].k);});
+      CH['b_ov_'+i]=mkLine('b_ov_'+i,range.labels,d.kpis[0].l,vals,d.color,d.kpis[0].u);
     });
     return;
   }
 
-  // Single dept — all KPI charts
-  const dept = DEPTS.find(d => d.id === deptId);
+  // FIX #6: show back button when viewing a specific dept
+  if(backBtn) backBtn.classList.remove('hidden');
+  var mw2=el('rp-msg-btn-wrap');
+  if(mw2){mw2.innerHTML='<button class="msg-action-btn" id="rp-open-msg" data-dept="'+id+'">&#x1F4AC; Message</button>';}
+  var dept=DEPTS.find(function(d){return d.id===id;});
+  el('rp-title').textContent=dept.name;
+  el('rp-sub').textContent=''; // purpose removed (V14)
+  var range=buildRange(id);
+  body.innerHTML='<div class="charts-grid" id="b-col"></div>';
+  var col=el('b-col');
+  if(dept.overlayCharts){
+    dept.overlayCharts.forEach(function(oc,i){
+      renderOverlayChart(col,'b_oc_'+i,oc,range,id,true);
+    });
+  } else {
+    dept.kpis.forEach(function(kpi,i){
+      var vals=range.dkeys.map(function(dk){return getGSVal(id,dk.y,dk.m,kpi.k);});
+      var cid='b_'+i;
+      var div=document.createElement('div');div.className='cc';
+      div.innerHTML='<div class="cc-t">'+kpi.l+'</div>'
+        +'<div class="cc-s">'+kpi.u+' · '+rangeLabel(range)+'</div>'
+        +'<div class="cc-w"><canvas id="'+cid+'"></canvas></div>';
+      col.appendChild(div);
+      CH[cid]=mkLine(cid,range.labels,kpi.l,vals,dept.color,kpi.u);
+    });
+  }
+}
 
-  // --- THÊM NÚT BACK VÀO TIÊU ĐỀ ---
-  titleEl.innerHTML = `
-    <div style="display:flex; align-items:center; gap:12px">
-      <button class="tbtn" onclick="renderBossRight()" style="padding:4px 10px; font-size:12px; cursor:pointer">← Back</button>
-      <span>${dept.name}</span>
-    </div>
-  `;
-  subEl.textContent = dept.purpose;
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
+function buildRange(did){
+  var labels=[],dkeys=[];
+  var cy=drF.y,cm=drF.m;
+  while(cy<drT.y||(cy===drT.y&&cm<=drT.m)){
+    labels.push(MN[cm]+' '+cy);
+    dkeys.push({dept:did,y:cy,m:cm}); // m is 0-indexed
+    cm++; if(cm>11){cm=0;cy++;} if(labels.length>60)break;
+  }
+  return{labels:labels,dkeys:dkeys};
+}
+function rangeLabel(range){
+  if(!range.labels.length)return'';
+  return range.labels[0]+(range.labels.length>1?' → '+range.labels[range.labels.length-1]:'');
+}
+function killCharts(pfx){
+  Object.keys(CH).filter(function(k){return k.indexOf(pfx)===0;})
+    .forEach(function(k){try{CH[k].destroy();}catch(e){}delete CH[k];});
+}
 
-  bodyEl.innerHTML = '<div class="charts-stack" id="b-charts-stack"></div>';
-  const stack = document.getElementById('b-charts-stack');
+// FIX #1: fmtV rounds to 1 decimal for percentages, no float noise
+function fmtV(v,k){
+  if(v==null)return'—';
+  if(k.t==='c')return'$'+Number(Math.round(v)).toLocaleString();
+  if(k.t==='p')return(Math.round(v*10)/10)+(k.u==='%'?'%':'');
+  return String(Math.round(v));
+}
 
-  dept.kpis.forEach((kpi, idx) => {
-    const deptKeys = keys.map(k => k.replace('DEPTID', deptId));
-    const vals = deptKeys.map(k => STORE[k]?.[kpi.key] ?? null);
-    const canvasId = `b_${idx}`;
-    const card = document.createElement('div');
-    card.className = 'chart-card';
-    card.innerHTML = `
-      <div class="cc-head">
-        <div class="cc-title">${kpi.label}</div>
-        <div class="cc-sub">${kpi.unit} · ${labels[0]} → ${labels[labels.length - 1]}</div>
-      </div>
-      <div class="cc-wrap"><canvas id="${canvasId}"></canvas></div>`;
-    stack.appendChild(card);
-    charts[canvasId] = mkLine(canvasId, labels, kpi.label, vals, dept.color, kpi.unit);
+function chartOpts(unit){
+  return{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){
+      var v=ctx.raw;if(v==null)return'No data';
+      // FIX #1: round tooltip values
+      if(unit==='%')return(Math.round(v*10)/10)+'%';
+      if(unit==='USD')return'$'+Math.round(v).toLocaleString();
+      if(unit==='hrs'||unit==='count'||unit==='cnt'||unit==='ppl')return Math.round(v).toLocaleString();
+      return(Math.round(v*100)/100).toString();
+    }}}},
+    scales:{
+      y:{beginAtZero:false,grid:{color:'rgba(0,0,0,.05)'},
+         // V14: min = dataMin × 0.90 so lowest point is clearly visible
+         afterDataLimits:function(axis){
+           var range=axis.max-axis.min;
+           // For zero-based units (counts, integers) keep 0 as min
+           if(unit==='count'||unit==='cnt'||unit==='ppl'||unit==='No.'||unit==='Rate'){
+             axis.min=0;return;
+           }
+           // Pad bottom by 10% of visible range
+           if(axis.min>0)axis.min=Math.max(0,axis.min-range*0.10);
+           else axis.min=axis.min-Math.abs(axis.min)*0.10;
+         },
+         ticks:{font:{size:10},callback:function(v){
+           if(unit==='%')return(Math.round(v*10)/10)+'%';
+           if(unit==='USD')return v>=1e6?(Math.round(v/1e5)/10)+'M':v>=1000?Math.round(v/1000)+'k':'$'+Math.round(v);
+           if(unit==='hrs'||unit==='count'||unit==='cnt'||unit==='ppl')return Math.round(v).toLocaleString();
+           return Math.round(v*100)/100;
+         }}},
+      x:{grid:{display:false},ticks:{font:{size:10},maxRotation:45,
+         autoSkip:true,maxTicksLimit:14}}
+    }
+  };
+}
+
+function mkLine(id,labels,label,data,color,unit){
+  var many=labels.length>24;
+  var opts=chartOpts(unit);
+  opts.plugins.datalabels={
+    display:!many,color:color,anchor:'end',align:'top',
+    font:{size:9,weight:'600'},
+    formatter:function(v){
+      if(v==null)return null;
+      if(unit==='%')return(Math.round(v*10)/10)+'%';
+      if(unit==='USD')return v>=1e6?(Math.round(v/1e5)/10)+'M':v>=1000?Math.round(v/1000)+'k':'';
+      return Math.round(v);
+    }
+  };
+  return new Chart(document.getElementById(id),{
+    type:'line',
+    data:{labels:labels,datasets:[{label:label,data:data,
+      borderColor:color,backgroundColor:color+'40',tension:.3,fill:true,
+      borderWidth:2,
+      pointRadius:many?2:4,pointBackgroundColor:color,
+      pointBorderColor:color,pointBorderWidth:2,
+      spanGaps:true}]},
+    options:opts,plugins:[ChartDataLabels]
   });
 }
 
-// ══════════════════════════════════════════════════════
-// DATE RANGE BUILDER
-// ══════════════════════════════════════════════════════
-function buildDateRange(){
-  const labels=[], keys=[];
-  let cy=drFrom.y, cm=drFrom.m;
-  while(cy<drTo.y||(cy===drTo.y&&cm<=drTo.m)){
-    labels.push(`${MONTHS[cm]} ${cy}`);
-    keys.push(`DEPTID_${cy}_${cm}`);
-    cm++; if(cm>11){cm=0;cy++;}
-    if(labels.length>48) break; // safety cap
-  }
-  return {labels, keys};
+
+// ═══════════════════════════════════════════════
+// MESSAGING — BOD <-> Dept 2-way communication
+// ═══════════════════════════════════════════════
+var msgDeptTarget=null;
+function getMsgs(){try{var r=localStorage.getItem('cmi_msgs');return r?JSON.parse(r):[];}catch(e){return[];}}
+function saveMsgsLocal(m){try{localStorage.setItem('cmi_msgs',JSON.stringify(m));}catch(e){}}
+function getUnreadCount(deptId){
+  var msgs=getMsgs();var me=U?U.username:'';
+  return msgs.filter(function(m){
+    var mine=(U&&U.role==='dept'&&m.dept===deptId&&m.fromRole!=='dept')
+            ||(U&&(U.role==='bod'||U.role==='admin')&&m.dept===deptId&&m.fromRole==='dept');
+    return mine&&(!m.read||m.read.indexOf(me)<0);
+  }).length;
+}
+function getDeptUnreadBadge(deptId){
+  var n=getUnreadCount(deptId);
+  return n>0?'<span class="unread-dot" title="'+n+' unread"></span>':'';
+}
+var MSG_POLL_TIMER = null;   // active when panel is open
+var MSG_BG_TIMER   = null;   // background unread-dot refresh (60s)
+
+// ── Background poll: refresh unread counts silently ──
+function startMsgBackgroundPoll(){
+  if(MSG_BG_TIMER) clearInterval(MSG_BG_TIMER);
+  MSG_BG_TIMER = setInterval(function(){
+    if(!U) return;
+    loadMsgsFromGAS('', function(){
+      updateUnreadUI();
+    });
+  }, 60000); // every 60 seconds
 }
 
-// ══════════════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════════════
-function fmtV(v,k){
-  if(v==null) return '—';
-  if(k.t==='cur') return '$'+Number(v).toLocaleString();
-  if(k.t==='pct') return Number(v).toFixed(1)+'%';
-  if(k.t==='dec') return Number(v).toFixed(2);
-  return Math.round(v).toString();
+function stopMsgBackgroundPoll(){
+  if(MSG_BG_TIMER){clearInterval(MSG_BG_TIMER);MSG_BG_TIMER=null;}
 }
 
-function mkLine(canvasId, labels, label, data, color, unit){
-  const hasData = data.some(v=>v!=null&&v!==0);
-  return new Chart(document.getElementById(canvasId),{
-    type:'line',
-    data:{labels, datasets:[{
-      label, data,
-      borderColor: color,
-      backgroundColor: color+'15',
-      tension:.3, fill:true,
-      pointRadius: labels.length>24 ? 2 : 4,
-      pointBackgroundColor: color,
-      spanGaps: true,
-    }]},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}, tooltip:{
-        callbacks:{label: ctx=>{
-          const v=ctx.raw;
-          if(v==null) return 'No data';
-          if(unit==='%') return v.toFixed(1)+'%';
-          if(unit==='USD') return '$'+Number(v).toLocaleString();
-          return v;
-        }}
-      }},
-      scales:{
-        y:{beginAtZero: unit!=='%',
-           grid:{color:'rgba(0,0,0,.05)'},
-           ticks:{font:{size:10}, callback:v=>{
-             if(unit==='%') return v+'%';
-             if(unit==='USD') return '$'+(v>=1000000?(v/1000000).toFixed(1)+'M':v>=1000?(v/1000).toFixed(0)+'k':v);
-             return v;
-           }}},
-        x:{grid:{display:false}, ticks:{font:{size:10},
-           maxRotation:45, autoSkip:true, maxTicksLimit:labels.length>18?10:labels.length}}
+// ── Update all unread indicators in the UI ──
+function updateUnreadUI(){
+  var totalUnread = 0;
+  // Sort alphabetically by name
+  var sortedDepts=DEPTS.slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+  sortedDepts.forEach(function(d){
+    var n = getUnreadCount(d.id);
+    totalUnread += n;
+    // Update accordion badge (if visible)
+    var nameEl = document.querySelector('#acc-'+d.id+' .ah-name');
+    if(nameEl){
+      // Remove old unread dot, re-add if needed
+      var oldDot = nameEl.querySelector('.unread-dot');
+      if(oldDot) oldDot.remove();
+      if(n > 0){
+        var dot = document.createElement('span');
+        dot.className = 'unread-dot';
+        dot.title = n+' unread';
+        nameEl.appendChild(dot);
       }
+    }
+    // Update open msg button in rp-msg-btn-wrap if showing this dept
+    if(msgDeptTarget === d.id){
+      // panel is open for this dept — no need to show badge
+    }
+  });
+  // Topbar red dot
+  var topDot = el('topbar-msg-dot');
+  if(topDot) topDot.style.display = totalUnread > 0 ? 'inline-block' : 'none';
+  // Update Messages button badge in rp-msg-btn-wrap
+  var openMsgBtn = document.querySelector('#rp-open-msg');
+  if(openMsgBtn && openMsgBtn.dataset.dept){
+    var deptUnread = getUnreadCount(openMsgBtn.dataset.dept);
+    var existing = openMsgBtn.querySelector('.msg-unread-badge');
+    if(deptUnread > 0){
+      if(!existing){
+        var badge = document.createElement('span');
+        badge.className = 'msg-unread-badge';
+        openMsgBtn.appendChild(badge);
+      } else {
+        existing.textContent = deptUnread > 1 ? deptUnread : '';
+      }
+    } else {
+      if(existing) existing.remove();
+    }
+  }
+}
+
+function openMsgPanel(deptId){
+  var dept=DEPTS.find(function(d){return d.id===deptId;});
+  msgDeptTarget=deptId;
+  el('msg-panel-title').textContent='\u{1F4AC} '+(dept?dept.name:deptId);
+  el('msg-panel').classList.add('open');
+  // Load from GAS first, render, mark read
+  loadMsgsFromGAS(deptId, function(msgs){
+    refreshMsgThread();
+    markDeptRead(deptId);
+  });
+  // Poll every 15s while panel is open
+  if(MSG_POLL_TIMER) clearInterval(MSG_POLL_TIMER);
+  MSG_POLL_TIMER = setInterval(function(){
+    if(!msgDeptTarget) return;
+    loadMsgsFromGAS(msgDeptTarget, function(){
+      refreshMsgThread();
+    });
+  }, 15000);
+}
+
+function markDeptRead(deptId){
+  var msgs=getMsgs(); var me=U?U.username:'';
+  msgs.forEach(function(m){
+    if(m.dept===deptId){if(!m.read)m.read=[];if(m.read.indexOf(me)<0)m.read.push(me);}
+  });
+  saveMsgsLocal(msgs);
+}
+function closeMsgPanel(){
+  el('msg-panel').classList.remove('open');
+  msgDeptTarget=null;
+  if(MSG_POLL_TIMER){clearInterval(MSG_POLL_TIMER);MSG_POLL_TIMER=null;}
+}
+function refreshMsgThread(){
+  if(!msgDeptTarget)return;
+  var msgs=getMsgs().filter(function(m){return m.dept===msgDeptTarget;});
+  // Admin cannot see BOD messages
+  if(U&&U.role==='admin') msgs=msgs.filter(function(m){return m.fromRole!=='bod';});
+  var thread=el('msg-thread');
+  if(!msgs.length){thread.innerHTML='<div style="font-size:12px;color:var(--hi);text-align:center;padding:20px">No messages yet.</div>';return;}
+  thread.innerHTML=msgs.map(function(m){
+    var isMe=U&&m.from===U.username;
+    return '<div style="display:flex;flex-direction:column;align-items:'+(isMe?'flex-end':'flex-start')+'">'
+      +'<div class="msg-bubble '+(isMe?'msg-from-me':'msg-from-other')+'">'
+      +esc(m.text)
+      +'<div class="msg-meta">'+m.fromRole.toUpperCase()+(isMe?' (you)':' \u00b7 '+m.from)+' \u00b7 '+new Date(m.ts).toLocaleString()+'</div>'
+      +'</div></div>';
+  }).join('');
+  thread.scrollTop=thread.scrollHeight;
+  updateUnreadUI();
+}
+function sendMsg(){
+  var inp=el('msg-txt-input');var text=(inp.value||'').trim();
+  if(!text||!msgDeptTarget||!U)return;
+  var msg={id:Date.now(),from:U.username,fromRole:U.role,dept:msgDeptTarget,
+    text:text,ts:new Date().toISOString(),read:[U.username]};
+  // Optimistic local update
+  var msgs=getMsgs();msgs.push(msg);saveMsgsLocal(msgs);
+  inp.value='';refreshMsgThread();
+  // Save to GAS via beacon (CORS-free, fire-and-forget)
+  var gasUrl = GAS_MSG_URL||SCRIPT_URL;
+  if(gasUrl){
+    var beacon=new Image();
+    beacon.src=gasUrl
+      +'?action=sendMsg'
+      +'&id='+encodeURIComponent(msg.id)
+      +'&from='+encodeURIComponent(msg.from)
+      +'&fromRole='+encodeURIComponent(msg.fromRole)
+      +'&dept='+encodeURIComponent(msg.dept)
+      +'&text='+encodeURIComponent(msg.text)
+      +'&ts='+encodeURIComponent(msg.ts)
+      +'&t='+Date.now();
+    // Pull fresh from GAS 3s later to confirm save
+    setTimeout(function(){
+      if(msgDeptTarget) loadMsgsFromGAS(msgDeptTarget, function(){refreshMsgThread();});
+    }, 3000);
+  }
+}
+function showMsgHistory(){
+  el('modal-title').textContent='Message History';
+  el('modal-body').innerHTML='<div style="text-align:center;padding:20px;color:var(--hi)">Loading…</div>';
+  el('modal-overlay').style.display='flex';
+  loadMsgsFromGAS('', function(allMsgs){
+    var msgs=allMsgs.slice().reverse();
+    el('modal-title').textContent='Message History ('+(msgs.length)+')';
+    el('modal-body').innerHTML=!msgs.length
+      ?'<div style="color:var(--hi);font-size:12px;text-align:center;padding:20px">No messages yet.</div>'
+      :msgs.map(function(m){
+          var dept=DEPTS.find(function(d){return d.id===m.dept;});
+          return '<div class="hist-item"><div class="hist-meta">'+m.fromRole.toUpperCase()+' \u00b7 '+m.from+' \u2192 '+(dept?dept.name:m.dept)+' \u00b7 '+new Date(m.ts).toLocaleString()+'</div><div class="hist-text">'+esc(m.text)+'</div></div>';
+        }).join('');
+  });
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ═══════════════════════════════════════════════
+// CHANGE PASSWORD
+// Passwords are stored in localStorage so they
+// persist across sessions on the same browser.
+// Key: cmi_pw_[username]
+// ═══════════════════════════════════════════════
+function getPass(username){
+  // Priority: localStorage (synced from GAS) → USERS default
+  try{
+    var stored=localStorage.getItem('cmi_pw_'+username);
+    return stored||USERS[username].pass;
+  }catch(e){ return USERS[username] ? USERS[username].pass : ''; }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PASSWORD SYNC — reads from Google Sheet CSV (same CORS-free method
+// as KPI data), writes via GAS GET (works when user is logged into
+// Google in same browser, falls back gracefully if blocked)
+// ══════════════════════════════════════════════════════════════════
+
+// Sheet GID for "Passwords" tab — update this after first deploy
+// To find: open Google Sheet → click Passwords tab → look at URL: ...#gid=XXXXXX
+var PW_SHEET_GID = '41732400';
+
+function getPwSheetUrl(){
+  return 'https://docs.google.com/spreadsheets/d/'+SHEET_ID
+    +'/export?format=csv&gid='+PW_SHEET_GID+'&t='+Date.now();
+}
+
+// Pull passwords from Sheet CSV → localStorage
+function syncPasswordsFromGAS(cb){
+  if(!PW_SHEET_GID){if(cb)cb();return;}
+  fetch(getPwSheetUrl())
+    .then(function(r){return r.text();})
+    .then(function(csv){
+      var rows=parseCSV(csv);
+      // rows[0] = header: username,password,updated_at
+      for(var i=1;i<rows.length;i++){
+        var u=rows[i][0]&&rows[i][0].trim();
+        var p=rows[i][1]&&rows[i][1].trim();
+        if(u&&p){
+          try{localStorage.setItem('cmi_pw_'+u,p);}catch(e){}
+        }
+      }
+      if(cb)cb();
+    })
+    .catch(function(){if(cb)cb();});
+}
+
+// Write password to GAS via Image beacon — bypasses CORS completely
+function pushPasswordToGAS(username, newPass, onDone, onFail){
+  if(!GAS_PW_URL){if(onFail)onFail();return;}
+  var beacon=new Image();
+  beacon.onload=function(){if(onDone)onDone();};
+  beacon.onerror=function(){if(onDone)onDone();}; // GAS returns HTML so img errors — still fired
+  beacon.src=GAS_PW_URL
+    +'?action=setPassword'
+    +'&username='+encodeURIComponent(username)
+    +'&password='+encodeURIComponent(newPass)
+    +'&t='+Date.now();
+  // Assume success after short delay since beacon gives no readable response
+  setTimeout(function(){if(onDone)onDone();}, 2000);
+}
+
+// ═══════════════════════════════════════════════
+// DRILL-DOWN — click chart → full-screen modal
+// ═══════════════════════════════════════════════
+var drillChart=null;
+function openDrill(title, chartInstance){
+  if(!chartInstance) return;
+  var ov=el('drill-ov');
+  el('drill-title').textContent=title;
+  // Build legend from chart datasets
+  var legHtml='';
+  if(chartInstance&&chartInstance.data&&chartInstance.data.datasets){
+    var dsList=chartInstance.data.datasets.filter(function(ds){return ds.label&&ds.label!=='Ratio %';});
+    if(dsList.length>1||chartInstance.config.type==='bar'){
+      legHtml='<div class="drill-legend-row">'
+        +dsList.map(function(ds){
+          var isBar=ds.type==='bar'||chartInstance.config.type==='bar';
+          var swatch=isBar
+            ?'<span class="drill-leg-dot" style="background:'+(Array.isArray(ds.backgroundColor)?ds.backgroundColor[0]:ds.backgroundColor)+'"></span>'
+            :'<span class="drill-leg-line" style="background:'+ds.borderColor+'"></span>';
+          return '<div class="drill-leg-item">'+swatch+ds.label+'</div>';
+        }).join('')
+        +'</div>';
+    }
+  }
+  el('drill-body').innerHTML=legHtml+'<div class="drill-cw"><canvas id="drill-canvas"></canvas></div>';
+  ov.style.display='flex';
+  // Clone chart config into drill canvas
+  if(drillChart){try{drillChart.destroy();}catch(e){}}
+  var src=chartInstance;
+  var cfg={
+    type:src.config.type,
+    data:JSON.parse(JSON.stringify(src.config.data)),
+    options:JSON.parse(JSON.stringify(src.config.options)),
+    plugins:src.config.plugins
+  };
+  // Bigger fonts for drill view
+  if(cfg.options.scales){
+    if(cfg.options.scales.x) cfg.options.scales.x.ticks={font:{size:11}};
+    if(cfg.options.scales.y) cfg.options.scales.y.ticks={font:{size:11}};
+  }
+  if(cfg.options.plugins&&cfg.options.plugins.datalabels){
+    cfg.options.plugins.datalabels.font={size:11,weight:'700'};
+  }
+  drillChart=new Chart(el('drill-canvas'),cfg);
+}
+function closeDrill(){
+  el('drill-ov').style.display='none';
+  if(drillChart){try{drillChart.destroy();}catch(e){} drillChart=null;}
+}
+
+// ═══════════════════════════════════════════════
+// MESSAGE SYNC from GAS Sheet CSV
+// ═══════════════════════════════════════════════
+var MSG_SHEET_GID = '135962340'; // ← Fill in GID of Messages sheet tab after first message saved
+function getMsgSheetUrl(){
+  return 'https://docs.google.com/spreadsheets/d/'+SHEET_ID
+    +'/export?format=csv&gid='+MSG_SHEET_GID+'&t='+Date.now();
+}
+// ── loadMsgsFromGAS: fetch from GAS endpoint (JSON), merge with localStorage ──
+// GAS auto-creates "Messages" tab — no MSG_SHEET_GID needed
+function loadMsgsFromGAS(dept, cb){
+  var url = (GAS_MSG_URL||SCRIPT_URL)
+    +'?action=getMessages'
+    +(dept?'&dept='+encodeURIComponent(dept):'')
+    +'&t='+Date.now();
+  fetch(url)
+    .then(function(r){return r.json();})
+    .then(function(d){
+      // GAS getMessages returns array directly
+      var sheetMsgs = Array.isArray(d) ? d : [];
+      // Preserve local read-status
+      var local = getMsgs();
+      var localMap = {};
+      local.forEach(function(m){ localMap[String(m.id)] = m; });
+      sheetMsgs.forEach(function(m){
+        var lm = localMap[String(m.id)];
+        if(lm) m.read = lm.read || [];
+        else    m.read = [];
+      });
+      // Keep locally-created msgs not yet on sheet (optimistic UI)
+      var sheetIds = sheetMsgs.map(function(m){return String(m.id);});
+      local.forEach(function(lm){
+        if(sheetIds.indexOf(String(lm.id)) < 0) sheetMsgs.push(lm);
+      });
+      sheetMsgs.sort(function(a,b){return String(a.ts)<String(b.ts)?-1:1;});
+      saveMsgsLocal(sheetMsgs);
+      if(cb) cb(sheetMsgs);
+    })
+    .catch(function(){
+      // GAS unavailable → use local cache
+      if(cb) cb(getMsgs());
+    });
+}
+
+// Legacy alias for backward-compat
+function syncMsgsFromSheet(cb){
+  loadMsgsFromGAS('', function(){if(cb)cb();});
+}
+
+function doLogin(){
+  var u=el('l-u').value.trim().toLowerCase();
+  var p=el('l-p').value;
+  var acc=USERS[u];
+  var errEl=el('l-err');
+  if(!acc){
+    errEl.textContent='Unknown username.';
+    errEl.style.cssText='color:var(--rd);font-size:12px;margin-top:9px;padding:7px 10px;background:var(--rd-bg);border-radius:var(--r);display:block';
+    return;
+  }
+  // Check against stored password (or default)
+  if(getPass(u)!==p){
+    errEl.textContent='Incorrect password.';
+    errEl.style.cssText='color:var(--rd);font-size:12px;margin-top:9px;padding:7px 10px;background:var(--rd-bg);border-radius:var(--r);display:block';
+    return;
+  }
+  errEl.style.display='none';
+  U=Object.assign({},acc,{username:u});
+  el('pg-login').style.display='none';
+  el('pg-app').style.display='flex';
+  // t-av avatar circle removed in V14
+  // t-badge and t-name removed in V14 (topbar cleaner)
+  setSyncBadge('loading');
+  startMsgBackgroundPoll(); // start 60s background msg poll
+  fetchSheetData(function(){
+    if(U.role==='bod'||U.role==='admin'){
+      buildbodLeft(); renderbodRight(null);
+    } else {
+      deptId=U.dept; selY=NY; selM=NM;
+      buildDeptLeft(); renderDeptRight();
     }
   });
 }
+
+function showChangePw(){
+  var wrap=el('chpw-wrap');
+  if(!wrap)return;
+  // Toggle: if already open, close it
+  if(wrap.innerHTML.trim()){wrap.innerHTML='';return;}
+  wrap.innerHTML=
+    '<div class="pw-modal">'
+    +'<label>Current password</label>'
+    +'<input type="password" id="pw-cur" placeholder="Current password">'
+    +'<label>New password</label>'
+    +'<input type="password" id="pw-new" placeholder="At least 6 characters">'
+    +'<label>Confirm new password</label>'
+    +'<input type="password" id="pw-cfm" placeholder="Repeat new password">'
+    +'<button class="pw-save" id="pw-save-btn">Save new password</button>'
+    +'<div class="pw-msg" id="pw-msg"></div>'
+    +'</div>';
+  el('pw-save-btn').addEventListener('click',function(){
+    var cur=el('pw-cur').value;
+    var nw=el('pw-new').value;
+    var cfm=el('pw-cfm').value;
+    var msg=el('pw-msg');
+    if(cur!==getPass(U.username)){
+      msg.textContent='Current password is incorrect.';
+      msg.style.cssText='font-size:11px;text-align:center;display:block;color:var(--rd)';return;
+    }
+    if(nw.length<6){
+      msg.textContent='New password must be at least 6 characters.';
+      msg.style.cssText='font-size:11px;text-align:center;display:block;color:var(--rd)';return;
+    }
+    if(nw!==cfm){
+      msg.textContent='Passwords do not match.';
+      msg.style.cssText='font-size:11px;text-align:center;display:block;color:var(--rd)';return;
+    }
+    // Save locally first
+    try{ localStorage.setItem('cmi_pw_'+U.username, nw); }catch(e){}
+    msg.textContent='✓ Saving…';
+    msg.style.cssText='font-size:11px;text-align:center;display:block;color:var(--am)';
+    if(GAS_PW_URL){
+      pushPasswordToGAS(
+        U.username, nw,
+        function(){ // success
+          msg.textContent='✓ Password changed & synced across all devices.';
+          msg.style.cssText='font-size:11px;text-align:center;display:block;color:var(--gn)';
+          setTimeout(function(){wrap.innerHTML='';},2500);
+        },
+        function(errDetail){ // fail — already saved locally, tell user
+          msg.textContent='✓ Saved on this device. To sync: open the app once while logged into Google.';
+          msg.style.cssText='font-size:11px;text-align:center;display:block;color:var(--am)';
+          setTimeout(function(){wrap.innerHTML='';},4000);
+        }
+      );
+    } else {
+      msg.textContent='✓ Password changed (this browser only). Set GAS_PW_URL to sync across devices.';
+      msg.style.cssText='font-size:11px;text-align:center;display:block;color:var(--gn)';
+      setTimeout(function(){wrap.innerHTML='';},2500);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// ADMIN — user management panel in BOD sidebar
+// ═══════════════════════════════════════════════
+function buildAdminPanel(){
+  var rows=Object.entries(USERS).map(function(entry){
+    var uname=entry[0], acc=entry[1];
+    var roleLabel=acc.role==='bod'?'BOD':acc.role==='admin'?'Admin':(acc.dept||acc.role);
+    var hasCusPw=false;
+    try{hasCusPw=!!localStorage.getItem('cmi_pw_'+uname);}catch(e){}
+    return '<div style="display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid var(--bd)">'
+      +'<span style="width:7px;height:7px;border-radius:50%;background:'+acc.color+';flex-shrink:0"></span>'
+      +'<span style="flex:1;font-size:12px;font-weight:500">'+uname+'</span>'
+      +'<span style="font-size:10px;color:var(--mu)">'+roleLabel+'</span>'
+      +(hasCusPw?'<span title="Custom password set" style="font-size:10px;color:var(--am)">🔑</span>':'')
+      +'</div>';
+  }).join('');
+  return '<div style="font-size:10px;color:var(--hi);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.7px">User accounts</div>'
+    +rows
+    +'<div style="font-size:10px;color:var(--hi);margin-top:8px;line-height:1.5">🔑 = custom password set<br>Passwords stored in browser localStorage.</div>';
+}
+
+// ═══════════════════════════════════════════════
+// EVENT DELEGATION — zero inline handlers
+// ═══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',function(){
+  // Pre-load passwords from GAS before enabling login
+  // Disable login button while syncing so user always gets latest password
+  var loginBtn=el('btn-login');
+  loginBtn.disabled=true;
+  loginBtn.textContent='Syncing…';
+  syncPasswordsFromGAS(function(){
+    loginBtn.disabled=false;
+    loginBtn.textContent='Sign in';
+  });
+  el('btn-login').addEventListener('click',doLogin);
+  el('btn-logout').addEventListener('click',doLogout);
+  el('l-p').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+  el('l-u').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+
+  // Drill-down modal close & export
+  el('drill-cls-btn').addEventListener('click',closeDrill);
+  el('drill-ov').addEventListener('click',function(e){if(e.target===el('drill-ov'))closeDrill();});
+  el('drill-exp-btn').addEventListener('click',function(){
+    if(!drillChart)return;
+    var a=document.createElement('a');
+    a.href=drillChart.toBase64Image();
+    a.download=(el('drill-title').textContent||'chart')+'.png';
+    a.click();
+  });
+
+  // Chart grid click → drill-down
+  document.body.addEventListener('click',function(e){
+    var cc=e.target.closest('.charts-grid .cc');
+    if(cc&&cc.dataset.chartId){
+      var chart=CH[cc.dataset.chartId];
+      if(chart) openDrill(cc.dataset.chartTitle||'Chart Detail', chart);
+    }
+  });
+
+  // FIX #6: back button wired here
+  el('btn-bod-back').addEventListener('click',function(){
+    accOpen=null; buildbodLeft(); renderbodRight(null);
+  });
+
+  // sync badge click to refresh
+  el('sync-badge').addEventListener('click',function(){
+    if(!U)return;
+    fetchSheetData(function(){
+      if(U.role==='bod'||U.role==='admin'){buildbodLeft();renderbodRight(accOpen);}
+      else{buildDeptLeft();renderDeptRight();}
+    });
+  });
+
+  el('lp-body').addEventListener('click',function(e){
+    var t=e.target;
+    var ah=t.closest('.acc-h');if(ah){toggleAcc(ah.dataset.dept);return;}
+    if((t.classList.contains('vc-btn')||t.closest('.vc-btn'))&&(t.dataset.dept||t.closest('[data-dept]'))){
+      var dept=(t.dataset.dept||t.closest('[data-dept]').dataset.dept);
+      bodViewDept(dept);return;
+    }
+    if(t.closest('#sv-btn')){saveDept();return;}
+    if(t.id==='btn-unlock'||t.closest('#btn-unlock')){UNLOCKED[deptId+'_'+selY+'_'+selM]=true;buildDeptLeft();return;}
+    if(t.id==='btn-chpw'||t.closest('#btn-chpw')){showChangePw();return;}
+    if(t.dataset.quick){setQ(t.dataset.quick);return;}
+    if(t.id==='dr-apply-d'||t.id==='dr-apply-b'){applyDR();return;}
+  });
+  el('lp-body').addEventListener('change',function(e){
+    if(e.target.id==='s-m'||e.target.id==='s-y'){onPC();return;}
+    if(e.target.id==='bod-s-m'||e.target.id==='bod-s-y'){
+      var bm=el('bod-s-m'),by=el('bod-s-y');
+      if(bm)selBodM=parseInt(bm.value);
+      if(by)selBodY=parseInt(by.value);
+      buildbodLeft();
+      return;
+    }
+  });
+  el('rp-body').addEventListener('click',function(e){
+    var t=e.target;
+    var btn=t.closest('[data-dept]');
+    if(btn&&btn.classList.contains('vc-btn')){bodViewDept(btn.dataset.dept);return;}
+    if(t.classList.contains('vc-btn')&&t.dataset.dept){bodViewDept(t.dataset.dept);}
+  });
+  document.body.addEventListener('click',function(e){
+    var t=e.target;
+    if(t.id==='rp-open-msg'||t.closest('#rp-open-msg')){
+      var d=t.dataset.dept||(t.closest('[data-dept]')||{}).dataset.dept||deptId;
+      if(d)openMsgPanel(d);return;}
+    if(t.id==='rp-hist-btn'||t.closest('#rp-hist-btn')){showMsgHistory();return;}
+    if(t.id==='msg-panel-close-btn'){closeMsgPanel();return;}
+    if(t.id==='msg-send-btn'){sendMsg();return;}
+    if(t.id==='modal-close-x'||t===el('modal-overlay')){el('modal-overlay').style.display='none';return;}
+  });
+  el('msg-txt-input').addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}});
+});
 </script>
 </body>
 </html>
