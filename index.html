@@ -76,7 +76,7 @@ button{cursor:pointer}
 .lp{width:var(--lw);flex-shrink:0;background:var(--sf);border-right:1px solid var(--bd);
   overflow:hidden;display:flex;flex-direction:column}
 .lp-sc{flex:1;overflow-y:auto;padding:0 0 14px 0}
-.rp{flex:1;min-width:0;overflow-y:auto;padding:18px 20px;background:var(--bg)}
+.rp{flex:1;min-width:0;overflow-y:auto;padding:0 20px 18px;background:var(--bg)}
 .lsec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
   color:var(--hi);margin:14px 0 7px}
 .lsec:first-child{margin-top:0}
@@ -184,7 +184,7 @@ button{cursor:pointer}
 /* FIX #6: back button */
 .rp-hdr{display:flex;align-items:flex-start;justify-content:space-between;
   position:sticky;top:0;z-index:10;background:var(--bg);
-  margin:-18px -20px 16px;padding:16px 20px 14px;
+  margin:0 -20px 16px;padding:16px 20px 14px;
   border-bottom:1px solid var(--bd2);
   box-shadow:0 2px 8px rgba(0,0,0,.07)}
 .rp-hdr-left{}
@@ -1545,7 +1545,9 @@ function startMsgBackgroundPoll(){
   if(MSG_BG_TIMER) clearInterval(MSG_BG_TIMER);
   MSG_BG_TIMER = setInterval(function(){
     if(!U) return;
-    loadMsgsFromGAS('', function(){ updateUnreadUI(); });
+    // Dept users only need their dept msgs; bod/admin see all
+    var pollDept=(U&&U.role==='dept')?U.dept:'';
+    loadMsgsFromGAS(pollDept, function(){ updateUnreadUI(); });
   }, 60000);
   // Auto-refresh KPI data every 2 minutes silently
   if(KPI_REFRESH_TIMER) clearInterval(KPI_REFRESH_TIMER);
@@ -1568,8 +1570,12 @@ function stopMsgBackgroundPoll(){
 // ── Update all unread indicators in the UI ──
 function updateUnreadUI(){
   var totalUnread = 0;
-  // Sort alphabetically by name
-  var sortedDepts=DEPTS.slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+  // Dept role only sees their own dept; bod/admin see all
+  var visibleDepts = (U&&U.role==='dept')
+    ? DEPTS.filter(function(d){return d.id===U.dept;})
+    : DEPTS.slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+  var sortedDepts = (U&&U.role==='dept') ? visibleDepts
+    : visibleDepts; // already sorted above for bod
   sortedDepts.forEach(function(d){
     var n = getUnreadCount(d.id);
     totalUnread += n;
@@ -1716,7 +1722,9 @@ function showMsgHistory(){
   el('modal-title').textContent='Message History';
   el('modal-body').innerHTML='<div style="text-align:center;padding:20px;color:var(--hi)">Loading…</div>';
   el('modal-overlay').style.display='flex';
-  loadMsgsFromGAS('', function(allMsgs){
+  // Dept role: only load their own dept history
+  var histDept=(U&&U.role==='dept')?U.dept:'';
+  loadMsgsFromGAS(histDept, function(allMsgs){
     var msgs=allMsgs.slice().reverse();
     el('modal-title').textContent='Message History ('+(msgs.length)+')';
     el('modal-body').innerHTML=!msgs.length
