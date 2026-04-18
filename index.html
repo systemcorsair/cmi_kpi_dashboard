@@ -259,6 +259,8 @@ tbody tr:hover td{background:var(--sf2)}
 .charts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
 .charts-grid .cc{cursor:pointer;transition:box-shadow .15s,border-color .15s}
 .charts-grid .cc:hover{box-shadow:0 4px 18px rgba(0,0,0,.13);border-color:var(--bl-lt)}
+/* TwoBar split cards span both columns */
+.cc-span2{grid-column:1/-1}
 .cc-clickhint{font-size:9px;color:var(--hi);margin-top:3px;font-style:italic}
 
 /* DRILL-DOWN MODAL */
@@ -1001,9 +1003,9 @@ function renderOverlayChart(col, cid, oc, range, did, gridMode){
   var isTwoBarCheck=oc.datasets.length===2&&oc.datasets[0].type==='bar'&&oc.datasets[1].type==='bar';
   // Outer wrapper: for twoBar charts use split layout (monthly | total)
   var wrapper=document.createElement('div');
-  wrapper.className='cc';
-  wrapper.dataset.chartId=cid;wrapper.dataset.chartTitle=oc.title;wrapper.dataset.chartSub=rangeLabel(range)
-  wrapper.dataset.chartTitle=oc.title;
+  // TwoBar split cards need full-width to keep monthly+total side-by-side
+  wrapper.className='cc'+(isTwoBarCheck?' cc-span2':'');
+  wrapper.dataset.chartId=cid;wrapper.dataset.chartTitle=oc.title;wrapper.dataset.chartSub=rangeLabel(range);
   var clickHint=gridMode?'<div class="cc-clickhint">Click to expand</div>':'';
   if(isTwoBarCheck){
     wrapper.innerHTML='<div class="cc-t">'+oc.title+'</div>'
@@ -1054,18 +1056,22 @@ function renderOverlayChart(col, cid, oc, range, did, gridMode){
     title:{display:true,text:'Ratio %',color:'#6366F1',font:{size:10,weight:'600'}}};}
   opts.plugins.datalabels={
     display:function(ctx){
-      // Show labels on bar datasets always (when not many); on line when not many AND single dataset
       if(many)return false;
-      if(ctx.dataset.type==='bar'||(ctx.chart.config.type!=='bar'&&oc.datasets.length===1))return true;
-      return ctx.dataset.type!=='bar'?false:true;
+      // Hide Ratio % line labels (too cluttered alongside bars)
+      if(ctx.dataset.label==='Ratio %')return false;
+      // Show on both bar and line datasets
+      return true;
     },
-    color:function(ctx){return ctx.dataset.type==='bar'?'#333':(ctx.dataset.borderColor||'#333');},
+    color:function(ctx){
+      if(ctx.dataset.type==='bar')return'#333';
+      return ctx.dataset.borderColor||'#555';
+    },
     anchor:'end',align:'top',font:{size:9,weight:'600'},
     formatter:function(v){
       if(v==null)return null;
       if(oc.unit==='%')return(Math.round(v*10)/10)+'%';
-      if(oc.unit==='Days'||oc.unit==='days')return(Math.round(v*10)/10);
-      if(oc.unit==='USD')return v>=1e6?(Math.round(v/1e5)/10)+'M':v>=1000?Math.round(v/1000)+'k':'';
+      if(oc.unit==='Days'||oc.unit==='days'||oc.unit==='rate')return(Math.round(v*100)/100);
+      if(oc.unit==='USD')return v>=1e6?(Math.round(v/1e5)/10)+'M':v>=1000?Math.round(v/1000)+'k':'$'+Math.round(v);
       return Math.round(v);
     }
   };
@@ -1783,14 +1789,25 @@ function getMsgSheetUrl(){
 }
 // ── loadMsgsFromGAS: fetch from GAS endpoint (JSON), merge with localStorage ──
 // GAS auto-creates "Messages" tab — no MSG_SHEET_GID needed
+// Parse GAS response — handles both HtmlService (HTML-wrapped) and ContentService (plain JSON)
+function parseGASResponse(text){
+  // Try direct parse first (ContentService or already JSON)
+  try{return JSON.parse(text);}catch(e){}
+  // GAS HtmlService wraps JSON in <body>…</body>
+  var m=text.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  if(m){try{return JSON.parse(m[1]);}catch(e2){}}
+  return [];
+}
+
 function loadMsgsFromGAS(dept, cb){
   var url = (GAS_MSG_URL||SCRIPT_URL)
     +'?action=getMessages'
     +(dept?'&dept='+encodeURIComponent(dept):'')
     +'&t='+Date.now();
   fetch(url)
-    .then(function(r){return r.json();})
-    .then(function(d){
+    .then(function(r){return r.text();})
+    .then(function(text){
+      var d=parseGASResponse(text);
       // GAS getMessages returns array directly
       var sheetMsgs = Array.isArray(d) ? d : [];
       // Preserve local read-status
