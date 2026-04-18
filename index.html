@@ -184,8 +184,9 @@ button{cursor:pointer}
 /* FIX #6: back button */
 .rp-hdr{display:flex;align-items:flex-start;justify-content:space-between;
   position:sticky;top:0;z-index:10;background:var(--bg);
-  margin:-18px -20px 16px;padding:14px 20px 12px;
-  border-bottom:1px solid var(--bd)}
+  margin:-18px -20px 16px;padding:16px 20px 14px;
+  border-bottom:1px solid var(--bd2);
+  box-shadow:0 2px 8px rgba(0,0,0,.07)}
 .rp-hdr-left{}
 .rp-title{font-size:17px;font-weight:700;margin-bottom:3px}
 .rp-sub{font-size:12px;color:var(--mu)}
@@ -220,7 +221,8 @@ tbody tr:hover td{background:var(--sf2)}
 .edit-btn{padding:4px 10px;border-radius:var(--r);border:1px solid var(--gn);background:var(--sf);color:var(--gn);font-size:11px;font-weight:600;cursor:pointer}
 .edit-btn:hover{background:var(--gn);color:#fff}
 /* MESSAGING */
-.msg-panel{position:fixed;right:0;top:var(--th);bottom:0;width:320px;background:var(--sf);border-left:1px solid var(--bd);display:flex;flex-direction:column;z-index:90;transform:translateX(100%);transition:transform .25s ease}
+/* msg-panel starts below topbar + rp-hdr sticky bar (~62px for title+padding) */
+.msg-panel{position:fixed;right:0;top:calc(var(--th) + 62px);bottom:0;width:320px;background:var(--sf);border-left:1px solid var(--bd);border-top:1px solid var(--bd);display:flex;flex-direction:column;z-index:89;transform:translateX(100%);transition:transform .25s ease}
 .msg-panel.open{transform:translateX(0)}
 .msg-hdr{padding:12px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
 .msg-hdr-title{font-weight:600;font-size:13px}
@@ -323,6 +325,30 @@ tbody tr:hover td{background:var(--sf2)}
 .drill-leg-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--mu)}
 .drill-leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
 .drill-leg-line{width:14px;height:3px;border-radius:2px;flex-shrink:0}
+
+/* ── Notification dropdown (topbar unread dot) ── */
+.notif-wrap{position:relative;display:inline-flex;align-items:center}
+.notif-btn{border:none;background:none;cursor:pointer;padding:2px 4px;
+  display:inline-flex;align-items:center;gap:3px}
+.notif-count{font-size:10px;font-weight:700;color:var(--rd);
+  background:var(--rd-bg);padding:0 5px;border-radius:8px;
+  animation:pulse-red 2s ease-in-out infinite;min-width:18px;text-align:center}
+.notif-panel{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);
+  box-shadow:0 8px 24px rgba(0,0,0,.15);min-width:240px;z-index:200;
+  display:none;flex-direction:column;overflow:hidden}
+.notif-panel.open{display:flex}
+.notif-head{padding:9px 14px;font-size:11px;font-weight:700;color:var(--mu);
+  text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--bd)}
+.notif-item{display:flex;align-items:center;gap:9px;padding:8px 14px;
+  cursor:pointer;transition:background .12s;border-bottom:1px solid var(--bd)}
+.notif-item:last-child{border-bottom:none}
+.notif-item:hover{background:var(--bl-bg)}
+.notif-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.notif-info{flex:1;min-width:0}
+.notif-dept{font-size:12px;font-weight:600;color:var(--tx)}
+.notif-cnt{font-size:10px;color:var(--rd);font-weight:600}
+.notif-empty{padding:14px;font-size:12px;color:var(--hi);text-align:center}
 </style>
 </head>
 <body>
@@ -351,7 +377,7 @@ tbody tr:hover td{background:var(--sf2)}
     <div class="tlogo">CMI <span>· KPI Dashboard</span></div>
     <div class="tright">
       <!-- FIX #2: sync badge is muted, no background colour -->
-      <span id="topbar-msg-dot" title="You have unread messages"></span><button id="sync-badge">● Loading…</button>
+      <div class="notif-wrap" id="notif-wrap"><button class="notif-btn" id="notif-btn" title="Unread messages" style="display:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--rd);display:inline-block;animation:pulse-red 2s ease-in-out infinite"></span><span class="notif-count" id="notif-count">0</span></button><div class="notif-panel" id="notif-panel"><div class="notif-head">Unread messages</div><div id="notif-list"></div></div></div><button id="sync-badge">● Loading…</button>
       <!-- t-badge and t-name removed in V14 -->
       <!-- avatar circle removed per V14 -->
       <button id="btn-logout">Sign out</button>
@@ -1324,7 +1350,9 @@ function renderbodRight(id){
     var subm=DEPTS.filter(function(d){return getDeptStatus(d,NY,NM)==='full';}).length;
     var pend=DEPTS.filter(function(d){return getDeptStatus(d,NY,NM)==='partial';}).length;
     el('rp-sub').textContent=MN[NM]+' '+NY+' · '+subm+' submitted · '+pend+' pending';
-    var tRows=DEPTS.map(function(d){
+    // Sort status table A-Z same as sidebar
+    var sortedForTable=DEPTS.slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+    var tRows=sortedForTable.map(function(d){
       var st=getDeptStatus(d,NY,NM);
       var ts=getLastSubmittedAt(d,NY,NM);
       var badgeCls=st==='full'?'bg':st==='partial'?'ba':'';
@@ -1333,8 +1361,10 @@ function renderbodRight(id){
       return '<tr>'
         +'<td><span style="display:inline-flex;align-items:center;gap:6px">'
         +'<span style="width:7px;height:7px;border-radius:50%;background:'+d.color+';display:inline-block"></span>'
-        +d.name+'</span></td>'
-        +'<td style="color:var(--mu)"><span style="font-size:10px;font-weight:600;padding:0 5px;background:var(--bl-bg);color:var(--bl);border-radius:4px;margin-right:4px">'+d.abbr+'</span>'+d.mgr+'</td>'
+        +d.name
+        +'<span style="font-size:10px;font-weight:600;padding:0 5px;background:var(--bl-bg);color:var(--bl);border-radius:4px;margin-left:2px">'+d.abbr+'</span>'
+        +'</span></td>'
+        +'<td style="color:var(--mu)">'+d.mgr+'</td>'
         +'<td><span class="badge '+badgeCls+'" style="'+badgeStyle+'">'+badgeTxt+'</span></td>'
         +'<td style="color:var(--mu);font-size:11px">'+ts+'</td>'
         +'<td><button class="vc-btn" style="width:auto;padding:4px 10px;margin:0" data-dept="'+d.id+'">Charts →</button></td>'
@@ -1506,18 +1536,29 @@ function getDeptUnreadBadge(deptId){
   var n=getUnreadCount(deptId);
   return n>0?'<span class="unread-dot" title="'+n+' unread"></span>':'';
 }
-var MSG_POLL_TIMER = null;   // active when panel is open
-var MSG_BG_TIMER   = null;   // background unread-dot refresh (60s)
+var MSG_POLL_TIMER    = null;   // active when panel is open
+var MSG_BG_TIMER      = null;   // background unread-dot refresh (60s)
+var KPI_REFRESH_TIMER = null;   // auto-refresh KPI data every 2 min
 
 // ── Background poll: refresh unread counts silently ──
 function startMsgBackgroundPoll(){
   if(MSG_BG_TIMER) clearInterval(MSG_BG_TIMER);
   MSG_BG_TIMER = setInterval(function(){
     if(!U) return;
-    loadMsgsFromGAS('', function(){
-      updateUnreadUI();
+    loadMsgsFromGAS('', function(){ updateUnreadUI(); });
+  }, 60000);
+  // Auto-refresh KPI data every 2 minutes silently
+  if(KPI_REFRESH_TIMER) clearInterval(KPI_REFRESH_TIMER);
+  KPI_REFRESH_TIMER = setInterval(function(){
+    if(!U) return;
+    fetchSheetData(function(){
+      // Only re-render if BOD is viewing a dept (not overview)
+      if((U.role==='bod'||U.role==='admin') && accOpen){
+        buildbodLeft(); renderbodRight(accOpen);
+      }
+      setSyncBadge('ok', GS_DATA.length);
     });
-  }, 60000); // every 60 seconds
+  }, 120000); // every 2 minutes
 }
 
 function stopMsgBackgroundPoll(){
@@ -1550,9 +1591,31 @@ function updateUnreadUI(){
       // panel is open for this dept — no need to show badge
     }
   });
-  // Topbar red dot
-  var topDot = el('topbar-msg-dot');
-  if(topDot) topDot.style.display = totalUnread > 0 ? 'inline-block' : 'none';
+  // Topbar notification button
+  var notifBtn = el('notif-btn');
+  var notifCount = el('notif-count');
+  var notifList = el('notif-list');
+  if(notifBtn) notifBtn.style.display = totalUnread > 0 ? 'inline-flex' : 'none';
+  if(notifCount) notifCount.textContent = totalUnread;
+  // Populate dropdown list
+  if(notifList){
+    // Sort alphabetically
+    var unreadDepts = DEPTS.filter(function(d){return getUnreadCount(d.id)>0;})
+                          .sort(function(a,b){return a.name.localeCompare(b.name);});
+    if(!unreadDepts.length){
+      notifList.innerHTML='<div class="notif-empty">No unread messages</div>';
+    } else {
+      notifList.innerHTML = unreadDepts.map(function(d){
+        var n = getUnreadCount(d.id);
+        return '<div class="notif-item" data-notif-dept="'+d.id+'" title="Open '+d.name+' messages">'
+          +'<span class="notif-dot" style="background:'+d.color+'"></span>'
+          +'<div class="notif-info">'
+          +'<div class="notif-dept">'+d.name+'</div>'
+          +'<div class="notif-cnt">'+n+' unread message'+(n>1?'s':'')+'</div>'
+          +'</div></div>';
+      }).join('');
+    }
+  }
   // Update Messages button badge in rp-msg-btn-wrap
   var openMsgBtn = document.querySelector('#rp-open-msg');
   if(openMsgBtn && openMsgBtn.dataset.dept){
@@ -2023,6 +2086,30 @@ document.addEventListener('DOMContentLoaded',function(){
 
   // Drill-down modal close & export
   el('drill-cls-btn').addEventListener('click',closeDrill);
+
+  // ── Notification dropdown toggle ──
+  document.body.addEventListener('click',function(e){
+    var notifBtn=el('notif-btn'),notifPanel=el('notif-panel');
+    // Toggle on button click
+    if(e.target.closest('#notif-btn')){
+      if(notifPanel) notifPanel.classList.toggle('open');
+      return;
+    }
+    // Click on a dept item → open msg panel for that dept
+    var notifItem=e.target.closest('[data-notif-dept]');
+    if(notifItem){
+      var dId=notifItem.dataset.notifDept;
+      if(notifPanel) notifPanel.classList.remove('open');
+      // If BOD, navigate to that dept first
+      if(U&&(U.role==='bod'||U.role==='admin')) bodViewDept(dId);
+      openMsgPanel(dId);
+      return;
+    }
+    // Close if clicking outside
+    if(notifPanel&&notifPanel.classList.contains('open')){
+      if(!e.target.closest('#notif-wrap')) notifPanel.classList.remove('open');
+    }
+  });
   el('drill-ov').addEventListener('click',function(e){if(e.target===el('drill-ov'))closeDrill();});
   el('drill-exp-btn').addEventListener('click',function(){
     if(!drillChart)return;
