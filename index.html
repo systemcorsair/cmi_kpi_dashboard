@@ -1779,7 +1779,7 @@ function getPass(username){
 
 // Sheet GID for "Passwords" tab — update this after first deploy
 // To find: open Google Sheet → click Passwords tab → look at URL: ...#gid=XXXXXX
-var PW_SHEET_GID = '220537512';
+var PW_SHEET_GID = '220537512'; // tab: Passwords
 
 function getPwSheetUrl(){
   return 'https://docs.google.com/spreadsheets/d/'+SHEET_ID
@@ -1887,7 +1887,7 @@ function closeDrill(){
 // ═══════════════════════════════════════════════
 // MESSAGE SYNC from GAS Sheet CSV
 // ═══════════════════════════════════════════════
-var MSG_SHEET_GID = '921732954'; // ← Fill in GID of Messages sheet tab after first message saved
+var MSG_SHEET_GID = '921732954'; // tab: Messages
 function getMsgSheetUrl(){
   return 'https://docs.google.com/spreadsheets/d/'+SHEET_ID
     +'/export?format=csv&gid='+MSG_SHEET_GID+'&t='+Date.now();
