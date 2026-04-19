@@ -440,13 +440,13 @@ tbody tr:hover td{background:var(--sf2)}
 // ═══════════════════════════════════════════════
 // GOOGLE SHEETS CONFIG
 // ═══════════════════════════════════════════════
-var SHEET_ID  = '1erlvjOnrRT90VMnCkNnqOU-xORkYidNqwAyxcWBjsVk';
-var SHEET_GID = '0';
+var SHEET_ID  = '126wR-AZZ3DeB6ozFSDimKr_WXnmGdMZ8SsdcItOdJ4c';
+var SHEET_GID = '0'; // tab: KPI
 var SHEET_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID
               + '/export?format=csv&gid=' + SHEET_GID;
-var SCRIPT_URL  = 'https://script.google.com/macros/s/AKfycbxUskIIs3qyEYjt5dqVBFoQOeqgLaVNJ3xEE6x0CwOgCII4H7MHz-EuoxkdIecqirknmQ/exec';
-var GAS_PW_URL  = 'https://script.google.com/macros/s/AKfycbxUskIIs3qyEYjt5dqVBFoQOeqgLaVNJ3xEE6x0CwOgCII4H7MHz-EuoxkdIecqirknmQ/exec';
-var GAS_MSG_URL = 'https://script.google.com/macros/s/AKfycbxUskIIs3qyEYjt5dqVBFoQOeqgLaVNJ3xEE6x0CwOgCII4H7MHz-EuoxkdIecqirknmQ/exec';
+var SCRIPT_URL  = 'https://script.google.com/macros/s/AKfycbxOwHajJlmEEuzkOahmwjW6TbRjf_ehEyu0LOCjqJTAfKiViaL-0VCcu6Yvo7ESaz7U/exec';
+var GAS_PW_URL  = 'https://script.google.com/macros/s/AKfycbxOwHajJlmEEuzkOahmwjW6TbRjf_ehEyu0LOCjqJTAfKiViaL-0VCcu6Yvo7ESaz7U/exec';
+var GAS_MSG_URL = 'https://script.google.com/macros/s/AKfycbxOwHajJlmEEuzkOahmwjW6TbRjf_ehEyu0LOCjqJTAfKiViaL-0VCcu6Yvo7ESaz7U/exec';
 
 // ═══════════════════════════════════════════════
 // CONSTANTS
@@ -1779,7 +1779,7 @@ function getPass(username){
 
 // Sheet GID for "Passwords" tab — update this after first deploy
 // To find: open Google Sheet → click Passwords tab → look at URL: ...#gid=XXXXXX
-var PW_SHEET_GID = '41732400';
+var PW_SHEET_GID = '220537512';
 
 function getPwSheetUrl(){
   return 'https://docs.google.com/spreadsheets/d/'+SHEET_ID
@@ -1887,7 +1887,7 @@ function closeDrill(){
 // ═══════════════════════════════════════════════
 // MESSAGE SYNC from GAS Sheet CSV
 // ═══════════════════════════════════════════════
-var MSG_SHEET_GID = '135962340'; // ← Fill in GID of Messages sheet tab after first message saved
+var MSG_SHEET_GID = '921732954'; // ← Fill in GID of Messages sheet tab after first message saved
 function getMsgSheetUrl(){
   return 'https://docs.google.com/spreadsheets/d/'+SHEET_ID
     +'/export?format=csv&gid='+MSG_SHEET_GID+'&t='+Date.now();
