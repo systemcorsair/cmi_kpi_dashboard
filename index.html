@@ -819,6 +819,7 @@ function getLastDataMonth(deptId){
 
 function doLogout(){
   try{sessionStorage.removeItem('cmi_u');}catch(e){}
+  // Read-store is per-user key, no need to clear on logout
   U=null; deptId=null; accOpen=null;
   Object.keys(CH).forEach(function(k){ try{CH[k].destroy();}catch(e){} });
   CH={}; GS_DATA=[]; GS_HDR=[];
@@ -1524,12 +1525,27 @@ function mkLine(id,labels,label,data,color,unit){
 var msgDeptTarget=null;
 function getMsgs(){try{var r=localStorage.getItem('cmi_msgs');return r?JSON.parse(r):[];}catch(e){return[];}}
 function saveMsgsLocal(m){try{localStorage.setItem('cmi_msgs',JSON.stringify(m));}catch(e){}}
+// ── Read-status stored separately so poll never wipes it ──
+function getReadStore(){
+  try{var r=localStorage.getItem('cmi_read_'+((U&&U.username)||''));return r?JSON.parse(r):{};
+  }catch(e){return {};}
+}
+function saveReadStore(store){
+  try{localStorage.setItem('cmi_read_'+((U&&U.username)||''),JSON.stringify(store));}catch(e){}
+}
+function markMsgRead(msgId){
+  var s=getReadStore(); s[String(msgId)]=true; saveReadStore(s);
+}
+function isMsgRead(msgId){
+  return !!getReadStore()[String(msgId)];
+}
+
 function getUnreadCount(deptId){
-  var msgs=getMsgs();var me=U?U.username:'';
+  var msgs=getMsgs();
   return msgs.filter(function(m){
     var mine=(U&&U.role==='dept'&&m.dept===deptId&&m.fromRole!=='dept')
             ||(U&&(U.role==='bod'||U.role==='admin')&&m.dept===deptId&&m.fromRole==='dept');
-    return mine&&(!m.read||m.read.indexOf(me)<0);
+    return mine && !isMsgRead(m.id);
   }).length;
 }
 function getDeptUnreadBadge(deptId){
@@ -1659,16 +1675,18 @@ function openMsgPanel(deptId){
     if(!msgDeptTarget) return;
     loadMsgsFromGAS(msgDeptTarget, function(){
       refreshMsgThread();
+      markDeptRead(msgDeptTarget); // mark newly arrived msgs as read too
     });
   }, 15000);
 }
 
 function markDeptRead(deptId){
-  var msgs=getMsgs(); var me=U?U.username:'';
+  // Mark all messages for this dept as read in the separate read-store
+  var msgs=getMsgs();
   msgs.forEach(function(m){
-    if(m.dept===deptId){if(!m.read)m.read=[];if(m.read.indexOf(me)<0)m.read.push(me);}
+    if(m.dept===deptId) markMsgRead(m.id);
   });
-  saveMsgsLocal(msgs);
+  updateUnreadUI();
 }
 function closeMsgPanel(){
   el('msg-panel').classList.remove('open');
