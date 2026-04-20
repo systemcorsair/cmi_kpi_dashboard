@@ -288,9 +288,9 @@ tbody tr:hover td{background:var(--sf2)}
 .drill-cw{position:relative;height:380px}
 
 /* PURPOSE line under dept name in left panel */
-.dept-purpose{font-size:10px;color:var(--hi);margin-bottom:10px;
+.dept-purpose{font-size:13px;color:var(--tx);margin-bottom:10px;
   font-style:italic;line-height:1.4;padding:5px 8px;background:var(--sf2);
-  border-radius:var(--r);border-left:3px solid var(--bd2)}
+  border-radius:var(--r);border-left:3px solid var(--bl)}
 
 /* ── Message button unread badge ── */
 .msg-unread-badge{
@@ -1745,7 +1745,9 @@ function showMsgHistory(){
   // Dept role: only load their own dept history
   var histDept=(U&&U.role==='dept')?U.dept:'';
   loadMsgsFromGAS(histDept, function(allMsgs){
-    var msgs=allMsgs.slice().reverse();
+    // Extra guard: dept users only see their own dept regardless of what loadMsgsFromGAS returns
+    var filtered = (U&&U.role==='dept') ? allMsgs.filter(function(m){return m.dept===U.dept;}) : allMsgs;
+    var msgs=filtered.slice().reverse();
     el('modal-title').textContent='Message History ('+(msgs.length)+')';
     el('modal-body').innerHTML=!msgs.length
       ?'<div style="color:var(--hi);font-size:12px;text-align:center;padding:20px">No messages yet.</div>'
