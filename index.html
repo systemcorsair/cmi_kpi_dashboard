@@ -1747,7 +1747,7 @@ function showMsgHistory(){
   loadMsgsFromGAS(histDept, function(allMsgs){
     // Extra guard: dept users only see their own dept regardless of what loadMsgsFromGAS returns
     var filtered = (U&&U.role==='dept') ? allMsgs.filter(function(m){return m.dept===U.dept;}) : allMsgs;
-    var msgs=filtered.slice().reverse();
+    var msgs=filtered.slice();
     el('modal-title').textContent='Message History ('+(msgs.length)+')';
     el('modal-body').innerHTML=!msgs.length
       ?'<div style="color:var(--hi);font-size:12px;text-align:center;padding:20px">No messages yet.</div>'
